@@ -267,7 +267,7 @@ export const CommandBar: React.FC<CommandBarProps> = ({
                 </div>
 
                 {/* List */}
-                <div className="max-h-[320px] overflow-y-auto scrollbar-thin scrollbar-thumb-slate-200 scrollbar-track-transparent py-2">
+                <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-200 scrollbar-track-transparent py-2">
                     <div className="px-4 py-1.5 text-xs font-semibold text-slate-400 uppercase tracking-wider">
                         {searchQuery ? 'Results' : 'Suggestions'}
                     </div>
@@ -323,7 +323,7 @@ export const CommandBar: React.FC<CommandBarProps> = ({
                         onChange={e => setPrompt(e.target.value)}
                         onKeyDown={handleKeyDown}
                         placeholder="Describe the flow you want to build..."
-                        className="w-full h-32 p-3 rounded-xl border border-slate-200 bg-slate-50/50 text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none resize-none"
+                        className="w-full flex-1 p-3 rounded-xl border border-slate-200 bg-slate-50/50 text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none resize-none"
                         autoFocus
                     />
                     <div className="flex justify-end mt-4">
@@ -385,6 +385,16 @@ export const CommandBar: React.FC<CommandBarProps> = ({
                     <textarea
                         value={code}
                         onChange={e => handleChange(e.target.value)}
+                        onKeyDown={(e) => {
+                            // Stop propagation for common editing shortcuts to prevent global handlers (like select all)
+                            if ((e.metaKey || e.ctrlKey) && ['a', 'c', 'v', 'z', 'y'].includes(e.key.toLowerCase())) {
+                                e.stopPropagation();
+                            }
+                            // Allow applying with cmd+enter
+                            if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+                                handleApply();
+                            }
+                        }}
                         className={`w-full flex-1 p-3 rounded-xl border text-sm font-mono leading-relaxed outline-none resize-none transition-all mb-4
                              ${error ? 'border-amber-300 bg-amber-50/30' : 'border-slate-200 bg-slate-50/50 focus:border-indigo-500'}
                         `}
@@ -422,7 +432,7 @@ export const CommandBar: React.FC<CommandBarProps> = ({
         }, [tSearch]);
 
         return (
-            <div className="flex flex-col h-full max-h-[400px]">
+            <div className="flex flex-col h-full">
                 <ViewHeader title="Templates" icon={<Layout className="w-4 h-4 text-blue-500" />} onBack={handleBack} />
 
                 {/* Template Search */}
@@ -436,7 +446,7 @@ export const CommandBar: React.FC<CommandBarProps> = ({
                     />
                 </div>
 
-                <div className="flex-1 overflow-y-auto p-2 grid grid-cols-1 gap-1">
+                <div className="overflow-y-auto p-2 grid grid-cols-1 gap-1 max-h-[350px]">
                     {filteredTemplates.map(t => {
                         const Icon = t.icon;
                         return (
@@ -473,7 +483,7 @@ export const CommandBar: React.FC<CommandBarProps> = ({
 
             <div
                 ref={containerRef}
-                className="pointer-events-auto w-[600px] bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/40 ring-1 ring-black/5 overflow-hidden animate-in slide-in-from-bottom-4 duration-200 flex flex-col"
+                className="pointer-events-auto w-[600px] h-[480px] bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/40 ring-1 ring-black/5 overflow-hidden animate-in slide-in-from-bottom-4 duration-200 flex flex-col"
                 onClick={(e) => e.stopPropagation()}
             >
                 {view === 'root' && <RootView />}

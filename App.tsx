@@ -146,6 +146,10 @@ const FlowEditor = () => {
 
   const onCloseContextMenu = closeContextMenu;
 
+  const onPaneClick = useCallback(() => {
+    closeContextMenu();
+  }, [closeContextMenu]);
+
   const screenToFlowPosition = useCallback((position: { x: number; y: number }) => {
     if (reactFlowWrapper.current) {
       const bounds = reactFlowWrapper.current.getBoundingClientRect();
@@ -285,8 +289,10 @@ const FlowEditor = () => {
     handleAddNode, handleAddAnnotation, handleAddSection,
     handleClear,
     copySelection, pasteSelection,
+    onConnectStart, onConnectEnd,
   } = useFlowOperations(
-    nodes, edges, setNodes, setEdges, recordHistory, setSelectedNodeId, setSelectedEdgeId
+    nodes, edges, setNodes, setEdges, recordHistory, setSelectedNodeId, setSelectedEdgeId,
+    screenToFlowPosition
   );
 
   const selectAll = useCallback(() => {
@@ -465,7 +471,9 @@ const FlowEditor = () => {
         onNodeContextMenu={onNodeContextMenu}
         onPaneContextMenu={onPaneContextMenu}
         onEdgeContextMenu={onEdgeContextMenu}
-        onPaneClick={onCloseContextMenu}
+        onPaneClick={onPaneClick}
+        onConnectStart={onConnectStart}
+        onConnectEnd={onConnectEnd}
         nodeTypes={nodeTypes}
         fitView
         className="bg-slate-50 pt-16"
@@ -610,10 +618,6 @@ const FlowEditor = () => {
               if (contextMenu.type === 'edge') deleteEdge(contextMenu.id);
               else deleteNode(contextMenu.id);
             }
-            onCloseContextMenu();
-          }}
-          onBringToFront={() => {
-            if (contextMenu.id) updateNodeZIndex(contextMenu.id, 'front');
             onCloseContextMenu();
           }}
           onSendToBack={() => {
