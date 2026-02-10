@@ -1,9 +1,10 @@
-import { Node, Edge, MarkerType } from 'reactflow';
-import { EDGE_STYLE, EDGE_LABEL_STYLE, EDGE_LABEL_BG_STYLE } from '../constants';
+import { createDefaultEdge } from '../constants';
+import { getDefaultColor } from '../theme';
+import { FlowNode, FlowEdge } from '../types';
 
 interface ParseResult {
-    nodes: Node[];
-    edges: Edge[];
+    nodes: FlowNode[];
+    edges: FlowEdge[];
     error?: string;
 }
 
@@ -110,7 +111,7 @@ export const parseMermaid = (input: string): ParseResult => {
     const SPACING_Y = direction === 'LR' ? 150 : 180;
     const nodesPerRow = direction === 'LR' ? 999 : 3; // LR = single row, TB = 3 per row
 
-    const flowNodes: Node[] = nodeArray.map((n, i) => {
+    const flowNodes: FlowNode[] = nodeArray.map((n, i) => {
         const col = i % nodesPerRow;
         const row = Math.floor(i / nodesPerRow);
         return {
@@ -118,26 +119,15 @@ export const parseMermaid = (input: string): ParseResult => {
             type: n.type,
             position: {
                 x: direction === 'LR' ? i * SPACING_X : col * SPACING_X,
-                y: direction === 'LR' ? col * SPACING_Y : row * SPACING_Y,
+                y: direction === 'LR' ? 0 : row * SPACING_Y,
             },
             data: { label: n.label, subLabel: '', color: getDefaultColor(n.type) },
         };
     });
 
-    const flowEdges: Edge[] = edges.map((e, i) => ({
-        id: `e-mermaid-${i}`,
-        source: e.source,
-        target: e.target,
-        label: e.label || undefined,
-        type: 'smoothstep',
-        markerEnd: { type: MarkerType.ArrowClosed },
-        animated: true,
-        style: EDGE_STYLE,
-        labelStyle: EDGE_LABEL_STYLE,
-        labelBgStyle: EDGE_LABEL_BG_STYLE,
-        labelBgPadding: [8, 4] as [number, number],
-        labelBgBorderRadius: 4,
-    }));
+    const flowEdges: FlowEdge[] = edges.map((e, i) =>
+        createDefaultEdge(e.source, e.target, e.label || undefined, `e-mermaid-${i}`)
+    );
 
     return { nodes: flowNodes, edges: flowEdges };
 };
@@ -180,12 +170,3 @@ function parseNodeDeclaration(raw: string): { id: string; label: string; type: s
     return null;
 }
 
-function getDefaultColor(type: string): string {
-    switch (type) {
-        case 'start': return 'emerald';
-        case 'end': return 'red';
-        case 'decision': return 'amber';
-        case 'custom': return 'violet';
-        default: return 'slate';
-    }
-}

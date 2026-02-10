@@ -28,7 +28,10 @@ import { parseFlowMindDSL } from '../services/flowmindDSLParser';
 import { toMermaid } from '../services/exportService';
 import { toFlowMindDSL } from '../services/flowmindDSLExporter';
 
-type CommandView = 'root' | 'ai' | 'mermaid' | 'flowmind' | 'templates';
+import { useReactFlow } from 'reactflow';
+import { useFlowStore } from '../store';
+
+type CommandView = 'root' | 'ai' | 'mermaid' | 'flowmind' | 'templates' | 'search';
 
 interface CommandBarProps {
     isOpen: boolean;
@@ -72,6 +75,7 @@ const ViewHeader = ({ title, icon, onBack }: { title: string, icon: React.ReactN
     <div className="flex items-center gap-3 px-4 py-3 border-b border-slate-200/50 bg-slate-50/50">
         <button
             onClick={onBack}
+            aria-label="Back"
             className="p-1 rounded-md hover:bg-slate-200 text-slate-500 transition-colors"
         >
             <ArrowLeft className="w-4 h-4" />
@@ -81,7 +85,7 @@ const ViewHeader = ({ title, icon, onBack }: { title: string, icon: React.ReactN
             <span>{title}</span>
         </div>
         <div className="ml-auto">
-            <button onClick={onBack} className="p-1 hover:bg-slate-200 rounded-full text-slate-400">
+            <button onClick={onBack} aria-label="Close" className="p-1 hover:bg-slate-200 rounded-full text-slate-400">
                 <X className="w-4 h-4" />
             </button>
         </div>
@@ -214,7 +218,7 @@ const RootView = ({
                     autoFocus
                 />
                 <div className="flex items-center gap-2">
-                    <button onClick={onClose} className="p-1 hover:bg-slate-100 rounded-md text-slate-400 hover:text-slate-600 transition-colors">
+                    <button onClick={onClose} aria-label="Close" className="p-1 hover:bg-slate-100 rounded-md text-slate-400 hover:text-slate-600 transition-colors">
                         <X className="w-4 h-4" />
                     </button>
                 </div>
@@ -489,6 +493,90 @@ const TemplatesView = ({
     );
 };
 
+// 5. Search View
+const SearchView = ({
+    nodes,
+    onClose,
+    handleBack
+}: {
+    nodes: Node[],
+    onClose: () => void,
+    handleBack: () => void
+}) => {
+    const [query, setQuery] = useState('');
+    const { fitView } = useReactFlow();
+    const { setSelectedNodeId } = useFlowStore();
+
+    const filteredNodes = useMemo(() => {
+        if (!query) return nodes;
+        return nodes.filter(n =>
+            (n.data?.label || '').toLowerCase().includes(query.toLowerCase()) ||
+            (n.data?.subLabel || '').toLowerCase().includes(query.toLowerCase()) ||
+            (n.id || '').toLowerCase().includes(query.toLowerCase())
+        );
+    }, [nodes, query]);
+
+    const handleSelectNode = (node: Node) => {
+        setSelectedNodeId(node.id);
+        fitView({ nodes: [node], duration: 800, padding: 1.5 }); // proper zoom to node
+        onClose();
+    };
+
+    return (
+        <div className="flex flex-col h-full">
+            <ViewHeader title="Search Nodes" icon={<Search className="w-4 h-4 text-violet-500" />} onBack={handleBack} />
+
+            <div className="px-4 py-2 border-b border-slate-100">
+                <input
+                    value={query}
+                    onChange={e => setQuery(e.target.value)}
+                    onKeyDown={(e) => e.stopPropagation()}
+                    placeholder="Search by label or ID..."
+                    className="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none focus:border-violet-400 transition-colors"
+                    autoFocus
+                />
+            </div>
+
+            <div className="overflow-y-auto p-2 grid grid-cols-1 gap-1 max-h-[350px]">
+                {filteredNodes.map(node => (
+                    <div
+                        key={node.id}
+                        onClick={() => handleSelectNode(node)}
+                        className="group flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 border border-transparent hover:border-slate-200 cursor-pointer transition-all"
+                    >
+                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 text-white font-bold text-xs
+                            ${node.type === 'start' ? 'bg-emerald-500' :
+                                node.type === 'end' ? 'bg-red-500' :
+                                    node.type === 'decision' ? 'bg-amber-500' :
+                                        'bg-blue-500'}
+                        `}>
+                            {getInitials(node.data?.label || node.type || '?')}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                            <h4 className="text-sm font-medium text-slate-700 group-hover:text-violet-700 truncate">
+                                {node.data?.label || 'Untitled Node'}
+                            </h4>
+                            <p className="text-xs text-slate-400 line-clamp-1">
+                                {node.data?.subLabel || `Type: ${node.type}`}
+                            </p>
+                        </div>
+                        <div className="text-[10px] text-slate-300 group-hover:text-slate-500 font-mono bg-slate-100 px-1.5 py-0.5 rounded">
+                            {node.id}
+                        </div>
+                    </div>
+                ))}
+                {filteredNodes.length === 0 && (
+                    <div className="text-center py-8 text-slate-400 text-sm">No nodes found</div>
+                )}
+            </div>
+        </div>
+    );
+};
+
+function getInitials(str: string) {
+    return str.slice(0, 2).toUpperCase();
+}
+
 // --- MAIN COMPONENT ---
 
 export const CommandBar: React.FC<CommandBarProps> = ({
@@ -606,6 +694,14 @@ export const CommandBar: React.FC<CommandBarProps> = ({
             }
         ] : []),
         {
+            id: 'search-nodes',
+            label: 'Search Nodes',
+            icon: <Search className="w-4 h-4 text-violet-500" />,
+            shortcut: '⌘F',
+            type: 'navigation',
+            view: 'search'
+        },
+        {
             id: 'undo',
             label: 'Undo',
             icon: <ArrowRight className="w-4 h-4 rotate-180 text-slate-500" />,
@@ -685,6 +781,13 @@ export const CommandBar: React.FC<CommandBarProps> = ({
                 {view === 'templates' && (
                     <TemplatesView
                         onSelectTemplate={onSelectTemplate}
+                        onClose={onClose}
+                        handleBack={handleBack}
+                    />
+                )}
+                {view === 'search' && (
+                    <SearchView
+                        nodes={nodes}
                         onClose={onClose}
                         handleBack={handleBack}
                     />

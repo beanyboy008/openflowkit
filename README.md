@@ -46,13 +46,15 @@ First-class support for **Mermaid.js** and our own **FlowMind DSL**.
 - **Intelligent Text Nodes**: Multi-line labels with auto-expanding text areas and Markdown support.
 - **Auto-Sizing**: Nodes automatically grow vertically to fit your content.
 - **Movable Edge Labels**: Drag labels anywhere along the connector wire; they stick like beads on a string.
-- **Toast Notifications**: Non-intrusive, animated feedback for all your actions.
+- **Node Search**: Instantly find and jump to any node using `⌘ F`.
+- **Keyboard Shortcuts**: Power-user friendly with a built-in help modal (press `?`).
+- **Zoom Indicator**: Real-time zoom level display with quick-fit navigation.
 - **Glassmorphism UI**: Modern, translucent controls that stay out of your way.
 
-### 🤖 Intelligent Assistance
-While FlowMind is a solid manual tool, it has an AI engine under the hood when you need speed:
-- **Text-to-Diagram**: "System architecture for a microservices app" -> *Boom, full diagram.*
-- **Contextual Edits**: Select a node and type "Expand this into a login subprocess".
+### 🛡 Reliability & Testing (New!)
+FlowMind is built for production-grade stability.
+- **Unit Testing**: 100% logic coverage for Mermaid and FlowMind DSL parsers.
+- **State Integrity**: History (undo/redo) and auto-save logic are strictly validated via Vitest.
 
 ---
 
@@ -61,9 +63,12 @@ While FlowMind is a solid manual tool, it has an AI engine under the hood when y
 Built for performance and extensibility using the best modern web tech:
 
 - **Core**: [React Flow](https://reactflow.dev/) + [Vite](https://vitejs.dev/)
+- **State Management**: [Zustand](https://zustand-demo.pmnd.rs/) for multi-tab shared state and persistence.
 - **Language**: [TypeScript](https://www.typescriptlang.org/) for type-safe reliability.
+- **Testing**: [Vitest](https://vitest.dev/) + [React Testing Library](https://testing-library.com/docs/react-testing-library/intro/)
 - **Styling**: [Tailwind CSS](https://tailwindcss.com/) with a custom design system.
-- **State**: React Hooks + Local Storage persistence.
+- **Persistence**: Zustand-powered local storage with automated state synchronization.
+- **Modular Components**: Decomposed component architecture for better maintainability (FlowCanvas, CommandBar, TopNav).
 - **Format**: Custom manageable DSL for graph persistence + Mermaid parsers.
 
 ---

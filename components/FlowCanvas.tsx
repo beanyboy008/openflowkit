@@ -1,0 +1,280 @@
+import React, { useMemo, useState, useCallback, useRef } from 'react';
+import ReactFlow, {
+    Background,
+    Controls,
+    MiniMap,
+    BackgroundVariant,
+    SelectionMode,
+    MarkerType,
+    useReactFlow,
+    Node,
+    Edge,
+    ConnectionMode
+} from 'reactflow';
+import { useFlowStore } from '../store';
+import { useFlowOperations } from '../hooks/useFlowOperations';
+import { useModifierKeys } from '../hooks/useModifierKeys';
+import CustomNode from './CustomNode';
+import AnnotationNode from './AnnotationNode';
+import SectionNode from './SectionNode';
+import TextNode from './TextNode';
+import { CustomBezierEdge, CustomSmoothStepEdge, CustomStepEdge } from './CustomEdge';
+import CustomConnectionLine from './CustomConnectionLine';
+import { ConnectMenu } from './ConnectMenu';
+import { ContextMenu, ContextMenuProps } from './ContextMenu';
+import { NavigationControls } from './NavigationControls';
+import { MINIMAP_NODE_COLORS, NODE_WIDTH, NODE_HEIGHT } from '../constants';
+
+interface FlowCanvasProps {
+    undo: () => void;
+    redo: () => void;
+    canUndo: boolean; // For keyboard shortcuts check?
+    canRedo: boolean;
+    recordHistory: () => void;
+    isSelectMode: boolean;
+}
+
+export const FlowCanvas: React.FC<FlowCanvasProps> = ({
+    undo,
+    redo,
+    recordHistory,
+    isSelectMode
+}) => {
+    const {
+        nodes, edges,
+        onNodesChange, onEdgesChange,
+        selectedNodeId, selectedEdgeId,
+        viewSettings: { showGrid, snapToGrid, showMiniMap },
+        setSelectedNodeId // Used by context menu? No, operations handle it
+    } = useFlowStore();
+
+    const { fitView } = useReactFlow();
+    const reactFlowWrapper = useRef<HTMLDivElement>(null);
+
+    // --- Connection Menu State ---
+    const [connectMenu, setConnectMenu] = useState<{ position: { x: number; y: number }, sourceId: string, sourceHandle: string | null } | null>(null);
+
+    // --- Context Menu State ---
+    const [contextMenu, setContextMenu] = useState<ContextMenuProps & { isOpen: boolean }>({
+        id: null,
+        type: 'pane',
+        position: { x: 0, y: 0 },
+        onClose: () => { },
+        isOpen: false,
+    });
+
+    const { screenToFlowPosition } = useReactFlow();
+
+    // --- Operations ---
+    const {
+        onConnect, onSelectionChange, onNodeDoubleClick,
+        onNodeDragStart, onNodeDragStop,
+        onConnectStart, onConnectEnd,
+        handleAddAndConnect,
+        deleteNode, deleteEdge, duplicateNode,
+        updateNodeZIndex,
+        pasteSelection, copySelection
+    } = useFlowOperations(
+        recordHistory,
+        (position, sourceId, sourceHandle) => setConnectMenu({ position, sourceId, sourceHandle })
+    );
+
+    // --- Keyboard Shortcuts ---
+    const { isSelectionModifierPressed } = useModifierKeys();
+
+    const isEffectiveSelectMode = isSelectMode || isSelectionModifierPressed;
+
+    // --- Selection Mode ---
+    // const [isSelectMode, setIsSelectMode] = useState(false); // Removed local state
+    // Ideally this should be in store if shared with Toolbar, but if Toolbar is outside...
+    // Wait, Toolbar has a button to toggle Select Mode.
+    // So isSelectMode MUST be in Store or passed as prop.
+    // It is currently not in store.
+    // Plan: Keep locally or move to store?
+    // Let's assume passed as prop or move to store. Use Store!
+    // I need to add `isSelectMode` to store to share it with Toolbar.
+    // For now, I will use Store method:
+    // Accessing `isSelectMode` from generic `viewSettings` or dedicated state.
+    // I'll add `interactionMode: 'select' | 'pan'` to store later.
+    // For now, I'll rely on a new prop? 
+    // "Decompose App.tsx" -> Ideally Toolbar shouldn't need full App control.
+    // I'll add `isSelectMode` to component state for now and leave Toolbar decoupled (or Toolbar manages it).
+    // Actually, Toolbar sends `toggleSelectMode` which updates `App.tsx` state.
+    // So `App.tsx` should pass `isSelectMode` to `FlowCanvas`.
+    // I missed adding `isSelectMode` to Props.
+
+    // Let's assume `isSelectMode` comes from props for now.
+    // But wait, `useKeyboardShortcuts` returns `isSelectionModifierPressed`.
+    // `FlowCanvas` calculates `isEffectiveSelectMode`.
+    // So `FlowCanvas` needs `isSelectMode` from parent.
+
+    // Updating Props interface
+    // ...
+
+    // --- Context Menu Handlers ---
+    const closeContextMenu = useCallback(
+        () => setContextMenu((prev) => ({ ...prev, isOpen: false })),
+        []
+    );
+
+    const onNodeContextMenu = useCallback(
+        (event: React.MouseEvent, node: Node) => {
+            event.preventDefault();
+            setContextMenu({
+                id: node.id,
+                type: 'node',
+                position: { x: event.clientX, y: event.clientY },
+                onClose: closeContextMenu,
+                isOpen: true,
+            });
+        },
+        [closeContextMenu]
+    );
+
+    // ... other context menu handlers ...
+
+    const onPaneContextMenu = useCallback(
+        (event: React.MouseEvent) => {
+            event.preventDefault();
+            setContextMenu({
+                id: null,
+                type: 'pane',
+                position: { x: event.clientX, y: event.clientY },
+                onClose: closeContextMenu,
+                isOpen: true,
+            });
+        },
+        [closeContextMenu]
+    );
+
+    const onEdgeContextMenu = useCallback(
+        (event: React.MouseEvent, edge: Edge) => {
+            event.preventDefault();
+            setContextMenu({
+                id: edge.id,
+                type: 'edge',
+                position: { x: event.clientX, y: event.clientY },
+                onClose: closeContextMenu,
+                isOpen: true,
+            });
+        },
+        [closeContextMenu]
+    );
+
+    const onCloseContextMenu = closeContextMenu;
+    const onPaneClick = useCallback(() => {
+        closeContextMenu();
+    }, [closeContextMenu]);
+
+
+    // --- Memoized Types ---
+    const nodeTypes = useMemo(() => ({
+        start: CustomNode,
+        process: CustomNode,
+        decision: CustomNode,
+        end: CustomNode,
+        custom: CustomNode,
+        annotation: AnnotationNode,
+        section: SectionNode,
+        text: TextNode,
+    }), []);
+
+    const edgeTypes = useMemo(() => ({
+        default: CustomBezierEdge,
+        smoothstep: CustomSmoothStepEdge,
+        step: CustomStepEdge,
+    }), []);
+
+    // IsSelectMode handling
+    // Let's use a prop for now.
+
+    return (
+        <div className="w-full h-full relative" ref={reactFlowWrapper}>
+            <ReactFlow
+                nodes={nodes}
+                edges={edges}
+                onNodesChange={onNodesChange}
+                onEdgesChange={onEdgesChange} // selection handling issues?
+                onConnect={onConnect}
+                onSelectionChange={onSelectionChange}
+                onNodeDragStart={onNodeDragStart}
+                onNodeDragStop={onNodeDragStop}
+                onNodeDoubleClick={onNodeDoubleClick}
+                onNodeContextMenu={onNodeContextMenu}
+                onPaneContextMenu={onPaneContextMenu}
+                onEdgeContextMenu={onEdgeContextMenu}
+                onPaneClick={onPaneClick}
+                onConnectStart={onConnectStart}
+                onConnectEnd={onConnectEnd}
+                nodeTypes={nodeTypes}
+                edgeTypes={edgeTypes}
+                fitView // Initial fit view?
+                className="bg-slate-50"
+                minZoom={0.1}
+                selectionOnDrag={isEffectiveSelectMode}
+                panOnDrag={!isEffectiveSelectMode}
+                selectionMode={isEffectiveSelectMode ? SelectionMode.Partial : undefined}
+                multiSelectionKeyCode="Alt"
+                defaultEdgeOptions={{
+                    style: { stroke: '#94a3b8', strokeWidth: 2 },
+                    animated: false,
+                    markerEnd: { type: MarkerType.ArrowClosed, color: '#94a3b8' },
+                }}
+                connectionLineComponent={CustomConnectionLine}
+                snapToGrid={snapToGrid}
+            >
+                {showGrid && <Background variant={BackgroundVariant.Dots} gap={20} size={1} color="#cbd5e1" />}
+                <NavigationControls />
+                {showMiniMap && (
+                    <MiniMap
+                        nodeColor={(n) => MINIMAP_NODE_COLORS[n.type ?? ''] ?? '#64748b'}
+                        maskColor="rgba(241, 245, 249, 0.7)"
+                        className="border border-slate-200 shadow-lg rounded-lg overflow-hidden"
+                    />
+                )}
+            </ReactFlow>
+
+            {connectMenu && (
+                <ConnectMenu
+                    position={connectMenu.position}
+                    onClose={() => setConnectMenu(null)}
+                    onSelect={(type) => {
+                        if (connectMenu) {
+                            const flowPos = screenToFlowPosition(connectMenu.position);
+                            handleAddAndConnect(type, flowPos, connectMenu.sourceId, connectMenu.sourceHandle);
+                        }
+                    }}
+                />
+            )}
+            {contextMenu.isOpen && (
+                <ContextMenu
+                    {...contextMenu}
+                    onClose={onCloseContextMenu}
+                    onCopy={copySelection}
+                    onPaste={() => {
+                        if (contextMenu.position) {
+                            pasteSelection(screenToFlowPosition(contextMenu.position));
+                        }
+                        onCloseContextMenu();
+                    }}
+                    onDuplicate={() => {
+                        if (contextMenu.id) duplicateNode(contextMenu.id);
+                        onCloseContextMenu();
+                    }}
+                    onDelete={() => {
+                        if (contextMenu.id) {
+                            if (contextMenu.type === 'edge') deleteEdge(contextMenu.id);
+                            else deleteNode(contextMenu.id);
+                        }
+                        onCloseContextMenu();
+                    }}
+                    onSendToBack={() => {
+                        if (contextMenu.id) updateNodeZIndex(contextMenu.id, 'back');
+                        onCloseContextMenu();
+                    }}
+                    canPaste={true}
+                />
+            )}
+        </div>
+    );
+};

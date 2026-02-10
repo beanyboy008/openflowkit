@@ -20,5 +20,10 @@ export default defineConfig(({ mode }) => {
       }
     },
     base: '/FlowMind/',
+    test: {
+      globals: true,
+      environment: 'jsdom',
+      setupFiles: './vitest.setup.ts',
+    },
   };
 });

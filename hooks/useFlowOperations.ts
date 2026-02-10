@@ -1,22 +1,20 @@
 import { useCallback, useRef } from 'react';
-import { Node, Edge, Connection, addEdge, MarkerType, OnSelectionChangeParams } from 'reactflow';
+import { Node, Edge, Connection, addEdge, OnSelectionChangeParams, useReactFlow } from 'reactflow';
 import { NodeData } from '../types';
-import { EDGE_STYLE, EDGE_LABEL_STYLE, EDGE_LABEL_BG_STYLE, NODE_WIDTH, NODE_HEIGHT } from '../constants';
+import { DEFAULT_EDGE_OPTIONS, NODE_WIDTH, NODE_HEIGHT } from '../constants';
+import { useFlowStore } from '../store';
 
 export const useFlowOperations = (
-  nodes: Node[],
-  edges: Edge[],
-  setNodes: React.Dispatch<React.SetStateAction<Node[]>>,
-  setEdges: React.Dispatch<React.SetStateAction<Edge[]>>,
   recordHistory: () => void,
-  setSelectedNodeId: (id: string | null) => void,
-  setSelectedEdgeId: (id: string | null) => void,
-  screenToFlowPosition: (position: { x: number; y: number }) => { x: number; y: number },
   onShowConnectMenu?: (position: { x: number; y: number }, sourceId: string, sourceHandle: string | null) => void
 ) => {
+  const { nodes, edges, setNodes, setEdges, setSelectedNodeId, setSelectedEdgeId } = useFlowStore();
+  const { screenToFlowPosition } = useReactFlow();
+
   const connectingNodeId = useRef<string | null>(null);
   const connectingHandleId = useRef<string | null>(null);
   const isConnectionValid = useRef<boolean>(false);
+
   // --- Node Data Updates ---
   const updateNodeData = useCallback((id: string, data: Partial<NodeData>) => {
     setNodes((nds) =>
@@ -87,14 +85,7 @@ export const useFlowOperations = (
     setEdges((eds) =>
       addEdge({
         ...params,
-        type: 'smoothstep',
-        markerEnd: { type: MarkerType.ArrowClosed },
-        animated: true,
-        style: EDGE_STYLE,
-        labelStyle: EDGE_LABEL_STYLE,
-        labelBgStyle: EDGE_LABEL_BG_STYLE,
-        labelBgPadding: [8, 4] as [number, number],
-        labelBgBorderRadius: 4,
+        ...DEFAULT_EDGE_OPTIONS,
       }, eds)
     );
   }, [setEdges, recordHistory]);
@@ -397,14 +388,7 @@ export const useFlowOperations = (
         source: sourceId,
         sourceHandle,
         target: id,
-        type: 'smoothstep',
-        markerEnd: { type: MarkerType.ArrowClosed },
-        animated: true,
-        style: EDGE_STYLE,
-        labelStyle: EDGE_LABEL_STYLE,
-        labelBgStyle: EDGE_LABEL_BG_STYLE,
-        labelBgPadding: [8, 4],
-        labelBgBorderRadius: 4,
+        ...DEFAULT_EDGE_OPTIONS,
       })
     );
     setSelectedNodeId(id);

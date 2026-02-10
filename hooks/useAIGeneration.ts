@@ -1,18 +1,16 @@
 import { useState, useCallback } from 'react';
-import { Node, Edge, MarkerType } from 'reactflow';
+import { Node, Edge, useReactFlow } from 'reactflow';
 import { generateDiagramFromPrompt } from '../services/geminiService';
-import { EDGE_STYLE, EDGE_LABEL_STYLE, EDGE_LABEL_BG_STYLE } from '../constants';
+import { createDefaultEdge } from '../constants';
+import { useFlowStore } from '../store';
 
 import { useToast } from '../components/ui/ToastContext';
 
 export const useAIGeneration = (
-  nodes: Node[],
-  edges: Edge[],
-  setNodes: (nodes: Node[]) => void,
-  setEdges: (edges: Edge[]) => void,
-  recordHistory: () => void,
-  fitView: (opts?: any) => void
+  recordHistory: () => void
 ) => {
+  const { nodes, edges, setNodes, setEdges } = useFlowStore();
+  const { fitView } = useReactFlow();
   const { addToast } = useToast();
   const [isAIOpen, setIsAIOpen] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -48,20 +46,9 @@ export const useAIGeneration = (
         data: { label: n.label, subLabel: n.description },
       }));
 
-      const newEdges: Edge[] = result.edges.map((e) => ({
-        id: e.id,
-        source: e.source,
-        target: e.target,
-        label: e.label,
-        type: 'smoothstep',
-        markerEnd: { type: MarkerType.ArrowClosed },
-        animated: true,
-        style: EDGE_STYLE,
-        labelStyle: EDGE_LABEL_STYLE,
-        labelBgStyle: EDGE_LABEL_BG_STYLE,
-        labelBgPadding: [8, 4] as [number, number],
-        labelBgBorderRadius: 4,
-      }));
+      const newEdges: Edge[] = result.edges.map((e) =>
+        createDefaultEdge(e.source, e.target, e.label, e.id)
+      );
 
       setNodes(newNodes);
       setEdges(newEdges);

@@ -2,6 +2,11 @@ import { Node, Edge, Position, getSmoothStepPath } from 'reactflow';
 import ReactDOMServer from 'react-dom/server';
 import React from 'react';
 import * as AllIcons from 'lucide-react';
+import {
+    NODE_EXPORT_COLORS,
+    SECTION_COLOR_PALETTE,
+    NODE_DEFAULTS,
+} from '../theme';
 
 // ============================================================================
 // 1. ICON HELPERS
@@ -42,46 +47,17 @@ const getIconSVGContent = (iconName: string, color: string): string => {
 };
 
 // ============================================================================
-// 2. COLOR PALETTES (Matching CustomNode & SectionNode exactly)
-// ============================================================================
-
-/** Matches getThemeStyles() in CustomNode.tsx — hex equivalents of Tailwind classes */
-const NODE_THEMES: Record<string, {
-    bg: string; border: string; iconBg: string; iconColor: string;
-    text: string; subText: string; shadow: string;
-}> = {
-    slate: { bg: '#ffffff', border: '#cbd5e1', iconBg: '#f1f5f9', iconColor: '#475569', text: '#1e293b', subText: '#475569', shadow: 'rgba(0,0,0,0.08)' },
-    blue: { bg: '#eff6ff', border: '#93c5fd', iconBg: '#dbeafe', iconColor: '#2563eb', text: '#1e293b', subText: '#475569', shadow: 'rgba(37,99,235,0.08)' },
-    emerald: { bg: '#ecfdf5', border: '#6ee7b7', iconBg: '#d1fae5', iconColor: '#059669', text: '#064e3b', subText: '#065f46', shadow: 'rgba(5,150,105,0.08)' },
-    red: { bg: '#fef2f2', border: '#fca5a5', iconBg: '#fee2e2', iconColor: '#dc2626', text: '#7f1d1d', subText: '#991b1b', shadow: 'rgba(220,38,38,0.08)' },
-    amber: { bg: '#fffbeb', border: '#fcd34d', iconBg: '#fef3c7', iconColor: '#d97706', text: '#78350f', subText: '#92400e', shadow: 'rgba(217,119,6,0.08)' },
-    violet: { bg: '#f5f3ff', border: '#c4b5fd', iconBg: '#ede9fe', iconColor: '#7c3aed', text: '#5b21b6', subText: '#6d28d9', shadow: 'rgba(124,58,237,0.08)' },
-    pink: { bg: '#fdf2f8', border: '#f9a8d4', iconBg: '#fce7f3', iconColor: '#db2777', text: '#831843', subText: '#9d174d', shadow: 'rgba(219,39,119,0.08)' },
-    yellow: { bg: '#fef9c3', border: '#fde047', iconBg: '#fef08a', iconColor: '#a16207', text: '#713f12', subText: '#854d0e', shadow: 'rgba(161,98,7,0.08)' },
+const getNodeTheme = (color: string = 'slate') => NODE_EXPORT_COLORS[color] || NODE_EXPORT_COLORS.slate;
+const getSectionTheme = (color: string = 'blue') => {
+    const t = SECTION_COLOR_PALETTE[color] || SECTION_COLOR_PALETTE.blue;
+    return {
+        bg: t.bg,
+        border: t.border,
+        title: t.title,
+        badgeBg: t.badgeBgHex || '#e2e8f0',
+        badgeText: t.badgeTextHex || '#334155',
+    };
 };
-
-/** Matches SECTION_COLORS in SectionNode.tsx */
-const SECTION_THEMES: Record<string, { bg: string; border: string; title: string; badgeBg: string; badgeText: string }> = {
-    slate: { bg: 'rgba(241,245,249,0.35)', border: '#94a3b8', title: '#334155', badgeBg: '#e2e8f0', badgeText: '#334155' },
-    blue: { bg: 'rgba(219,234,254,0.35)', border: '#60a5fa', title: '#1e40af', badgeBg: '#bfdbfe', badgeText: '#1e40af' },
-    emerald: { bg: 'rgba(209,250,229,0.35)', border: '#34d399', title: '#065f46', badgeBg: '#a7f3d0', badgeText: '#065f46' },
-    amber: { bg: 'rgba(254,243,199,0.35)', border: '#fbbf24', title: '#92400e', badgeBg: '#fde68a', badgeText: '#92400e' },
-    violet: { bg: 'rgba(237,233,254,0.35)', border: '#8b5cf6', title: '#5b21b6', badgeBg: '#c4b5fd', badgeText: '#5b21b6' },
-    red: { bg: 'rgba(254,226,226,0.35)', border: '#f87171', title: '#991b1b', badgeBg: '#fecaca', badgeText: '#991b1b' },
-    pink: { bg: 'rgba(252,231,243,0.35)', border: '#f472b6', title: '#9d174d', badgeBg: '#fbcfe8', badgeText: '#9d174d' },
-};
-
-/** Default color, icon, shape per node type — mirrors getDefaults() in CustomNode.tsx */
-const NODE_DEFAULTS: Record<string, { color: string; icon: string; shape: string }> = {
-    start: { color: 'emerald', icon: 'Play', shape: 'rounded' },
-    end: { color: 'red', icon: 'Square', shape: 'rounded' },
-    decision: { color: 'amber', icon: 'Diamond', shape: 'rounded' },
-    custom: { color: 'violet', icon: 'Cpu', shape: 'rounded' },
-    process: { color: 'slate', icon: 'Settings', shape: 'rounded' },
-};
-
-const getNodeTheme = (color: string = 'slate') => NODE_THEMES[color] || NODE_THEMES.slate;
-const getSectionTheme = (color: string = 'blue') => SECTION_THEMES[color] || SECTION_THEMES.blue;
 
 // ============================================================================
 // 3. EDGE HELPERS

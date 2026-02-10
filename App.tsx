@@ -1,35 +1,23 @@
 import React, { useState, useMemo, useRef, useCallback, useEffect } from 'react';
-import ReactFlow, {
-  Background,
-  Controls,
-  Edge,
-  Node,
-  useNodesState,
-  useEdgesState,
+import {
   ReactFlowProvider,
   useReactFlow,
-  BackgroundVariant,
-  MiniMap,
   getRectOfNodes,
-  SelectionMode,
-  MarkerType,
 } from 'reactflow';
+import { useFlowStore } from './store';
 import dagre from 'dagre';
-import CustomNode from './components/CustomNode';
-import AnnotationNode from './components/AnnotationNode';
-import SectionNode from './components/SectionNode';
-import TextNode from './components/TextNode';
-import { CustomBezierEdge, CustomSmoothStepEdge, CustomStepEdge } from './components/CustomEdge';
-import CustomConnectionLine from './components/CustomConnectionLine';
-import { ConnectMenu } from './components/ConnectMenu';
+
+// import CustomConnectionLine from './components/CustomConnectionLine'; // Moved
 import { CommandBar } from './components/CommandBar';
 import { Toolbar } from './components/Toolbar';
-import { NavigationControls } from './components/NavigationControls';
+import { FlowCanvas } from './components/FlowCanvas';
+// import { NavigationControls } from './components/NavigationControls'; // Moved to FlowCanvas
 import { PropertiesPanel } from './components/PropertiesPanel';
 // import { TemplatesPanel } from './components/TemplatesPanel'; // Removed
 import { SnapshotsPanel } from './components/SnapshotsPanel';
-import { ContextMenu, ContextMenuProps } from './components/ContextMenu';
 import { TopNav } from './components/TopNav';
+import { KeyboardShortcutsModal } from './components/KeyboardShortcutsModal';
+import ErrorBoundary from './components/ErrorBoundary';
 import { FlowTemplate } from './services/templates';
 import { toMermaid, toPlantUML } from './services/exportService';
 import { toFigmaSVG } from './services/figmaExportService';
@@ -58,24 +46,16 @@ import { useToast } from './components/ui/ToastContext';
 
 const FlowEditor = () => {
   const { addToast } = useToast();
-  const [nodes, setNodes, onNodesChange] = useNodesState(INITIAL_NODES);
-  const [edges, setEdges, onEdgesChange] = useEdgesState(INITIAL_EDGES);
 
-  // Tab State
-  const [tabs, setTabs] = useState<FlowTab[]>([
-    {
-      id: 'tab-1',
-      name: 'Untitled Flow',
-      nodes: INITIAL_NODES,
-      edges: INITIAL_EDGES,
-      history: { past: [], future: [] },
-    },
-  ]);
-  const [activeTabId, setActiveTabId] = useState('tab-1');
+  // --- Global Store ---
+  const {
+    nodes, edges, onNodesChange, onEdgesChange, setNodes, setEdges,
+    tabs, setTabs, activeTabId, setActiveTabId, addTab, closeTab, updateTab,
+    viewSettings, toggleGrid, toggleSnap, toggleMiniMap,
+    selectedNodeId, setSelectedNodeId, selectedEdgeId, setSelectedEdgeId
+  } = useFlowStore();
 
-  // Selection
-  const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
-  const [selectedEdgeId, setSelectedEdgeId] = useState<string | null>(null);
+  const { showGrid, snapToGrid, showMiniMap } = viewSettings;
 
   // Snapshots
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
@@ -83,239 +63,68 @@ const FlowEditor = () => {
 
   // Command Bar State
   const [isCommandBarOpen, setIsCommandBarOpen] = useState(false);
-  const [commandBarView, setCommandBarView] = useState<'root' | 'ai' | 'mermaid' | 'flowmind' | 'templates'>('root');
+  const [commandBarView, setCommandBarView] = useState<'root' | 'ai' | 'mermaid' | 'flowmind' | 'templates' | 'search'>('root');
 
-  const openCommandBar = (view: 'root' | 'ai' | 'mermaid' | 'flowmind' | 'templates' = 'root') => {
+  const openCommandBar = (view: 'root' | 'ai' | 'mermaid' | 'flowmind' | 'templates' | 'search' = 'root') => {
     setCommandBarView(view);
     setIsCommandBarOpen(true);
   };
 
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
-  const { fitView, project } = useReactFlow();
+  const { fitView, screenToFlowPosition } = useReactFlow();
 
-  // View Settings
-  const [showMiniMap, setShowMiniMap] = useState(true);
-  const [showGrid, setShowGrid] = useState(true);
-  const [snapToGrid, setSnapToGrid] = useState(true);
+  // View Settings (Migrated to Store)
 
-  // Connection Menu State
-  const [connectMenu, setConnectMenu] = useState<{ position: { x: number; y: number }, sourceId: string, sourceHandle: string | null } | null>(null);
+  // Context Menu and Connect Menu State removed (managed by FlowCanvas)
 
-  // Context Menu State
-  const [contextMenu, setContextMenu] = useState<ContextMenuProps & { isOpen: boolean }>({
-    id: null,
-    type: 'pane',
-    position: { x: 0, y: 0 },
-    onClose: () => { },
-    isOpen: false,
-  });
+  const onCloseContextMenu = useCallback(() => { }, []); // No-op if needed, or remove usage below
 
-  const closeContextMenu = useCallback(
-    () => setContextMenu((prev) => ({ ...prev, isOpen: false })),
-    []
-  );
 
-  const onNodeContextMenu = useCallback(
-    (event: React.MouseEvent, node: Node) => {
-      event.preventDefault();
-      setContextMenu({
-        id: node.id,
-        type: 'node',
-        position: { x: event.clientX, y: event.clientY },
-        onClose: closeContextMenu,
-        isOpen: true,
-      });
-    },
-    [closeContextMenu]
-  );
 
-  const onPaneContextMenu = useCallback(
-    (event: React.MouseEvent) => {
-      event.preventDefault();
-      setContextMenu({
-        id: null,
-        type: 'pane',
-        position: { x: event.clientX, y: event.clientY },
-        onClose: closeContextMenu,
-        isOpen: true,
-      });
-    },
-    [closeContextMenu]
-  );
 
-  const onEdgeContextMenu = useCallback(
-    (event: React.MouseEvent, edge: Edge) => {
-      event.preventDefault();
-      setContextMenu({
-        id: edge.id,
-        type: 'edge',
-        position: { x: event.clientX, y: event.clientY },
-        onClose: closeContextMenu,
-        isOpen: true,
-      });
-    },
-    [closeContextMenu]
-  );
-
-  const onCloseContextMenu = closeContextMenu;
-
-  const onPaneClick = useCallback(() => {
-    closeContextMenu();
-  }, [closeContextMenu]);
-
-  const screenToFlowPosition = useCallback((position: { x: number; y: number }) => {
-    if (reactFlowWrapper.current) {
-      const bounds = reactFlowWrapper.current.getBoundingClientRect();
-      return project({
-        x: position.x - bounds.left,
-        y: position.y - bounds.top,
-      });
-    }
-    return position;
-  }, [project]);
-
-  // --- Node Types ---
-  const nodeTypes = useMemo(() => ({
-    start: CustomNode,
-    process: CustomNode,
-    decision: CustomNode,
-    end: CustomNode,
-    custom: CustomNode,
-    annotation: AnnotationNode,
-    section: SectionNode,
-    text: TextNode,
-  }), []);
-
-  const edgeTypes = useMemo(() => ({
-    default: CustomBezierEdge,
-    smoothstep: CustomSmoothStepEdge,
-    step: CustomStepEdge,
-  }), []);
 
   // --- History ---
-  const { recordHistory, undo, redo, canUndo, canRedo, setPast, setFuture, past, future } = useFlowHistory(
-    nodes, edges, setNodes, setEdges
-  );
+  const { recordHistory, undo, redo, canUndo, canRedo, setPast, setFuture, past, future } = useFlowHistory();
 
   // --- Auto Save ---
   useAutoSave(
     tabs, activeTabId, nodes, edges,
     setTabs, setActiveTabId,
     setNodes, setEdges,
-    past, future, setPast, setFuture
+    setPast, setFuture
   );
 
   // --- Tab Management ---
   const handleSwitchTab = useCallback((newTabId: string) => {
-    if (newTabId === activeTabId) return;
-
-    // 1. Save current state to tabs array
-    setTabs((prevTabs) =>
-      prevTabs.map((tab) => {
-        if (tab.id === activeTabId) {
-          return {
-            ...tab,
-            nodes,
-            edges,
-            history: { past, future },
-          };
-        }
-        return tab;
-      })
-    );
-
-    // 2. Load new state
-    const newTab = tabs.find((t) => t.id === newTabId);
-    if (newTab) {
-      setNodes(newTab.nodes);
-      setEdges(newTab.edges);
-      setPast(newTab.history.past);
-      setFuture(newTab.history.future);
-      setActiveTabId(newTabId);
-      setTimeout(() => fitView({ duration: 800 }), 50);
-    }
-  }, [activeTabId, tabs, nodes, edges, past, future, setNodes, setEdges, setPast, setFuture, fitView]);
+    setActiveTabId(newTabId); // Store handles state saving/restoring
+    setTimeout(() => fitView({ duration: 800 }), 50);
+  }, [setActiveTabId, fitView]);
 
   const handleAddTab = useCallback(() => {
-    const newTabId = `tab-${Date.now()}`;
-    const newTab: FlowTab = {
-      id: newTabId,
-      name: 'New Flow',
-      nodes: [],
-      edges: [],
-      history: { past: [], future: [] },
-    };
-
-    // Save current tab state first
-    setTabs((prevTabs) => [
-      ...prevTabs.map((tab) => {
-        if (tab.id === activeTabId) {
-          return {
-            ...tab,
-            nodes,
-            edges,
-            history: { past, future },
-          };
-        }
-        return tab;
-      }),
-      newTab
-    ]);
-
-    // Switch to new tab
-    setNodes(newTab.nodes);
-    setEdges(newTab.edges);
-    setPast(newTab.history.past);
-    setFuture(newTab.history.future);
-    setActiveTabId(newTabId);
-  }, [activeTabId, nodes, edges, past, future, setNodes, setEdges, setPast, setFuture]);
+    addTab();
+    // store automatically switches to new tab
+  }, [addTab]);
 
   const handleCloseTab = useCallback((tabId: string) => {
     if (tabs.length === 1) {
       alert("Cannot close the last tab.");
       return;
     }
-
-    // Determine new active tab if closing the active one
-    let newActiveTabId = activeTabId;
-    if (tabId === activeTabId) {
-      const index = tabs.findIndex(t => t.id === tabId);
-      const nextTab = tabs[index + 1] || tabs[index - 1];
-      if (nextTab) {
-        newActiveTabId = nextTab.id;
-        // Load next tab content immediately since we are switching
-        setNodes(nextTab.nodes);
-        setEdges(nextTab.edges);
-        setPast(nextTab.history.past);
-        setFuture(nextTab.history.future);
-      }
-    }
-
-    setTabs((prev) => prev.filter((t) => t.id !== tabId));
-    setActiveTabId(newActiveTabId);
-  }, [tabs, activeTabId, setNodes, setEdges, setPast, setFuture]);
+    closeTab(tabId);
+  }, [tabs.length, closeTab]);
 
   const handleRenameTab = useCallback((tabId: string, newName: string) => {
-    setTabs((prev) => prev.map((t) => (t.id === tabId ? { ...t, name: newName } : t)));
-  }, []);
+    updateTab(tabId, { name: newName });
+  }, [updateTab]);
 
 
   // --- Core Operations ---
   const {
     updateNodeData, updateNodeType, updateNodeZIndex, updateEdge,
     deleteNode, deleteEdge, duplicateNode,
-    onConnect, onSelectionChange, onNodeDoubleClick,
-    onNodeDragStart, onNodeDragStop,
     handleAddNode, handleAddAnnotation, handleAddSection, handleAddTextNode,
-    handleClear,
-    copySelection, pasteSelection,
-    onConnectStart, onConnectEnd,
-    handleAddAndConnect,
-  } = useFlowOperations(
-    nodes, edges, setNodes, setEdges, recordHistory, setSelectedNodeId, setSelectedEdgeId,
-    screenToFlowPosition,
-    (position, sourceId, sourceHandle) => setConnectMenu({ position, sourceId, sourceHandle })
-  );
+    handleClear
+  } = useFlowOperations(recordHistory);
 
   const selectAll = useCallback(() => {
     setNodes((nds) => nds.map((n) => ({ ...n, selected: true })));
@@ -323,19 +132,23 @@ const FlowEditor = () => {
   }, [setNodes, setEdges]);
 
   // --- Keyboard Shortcuts ---
+  // --- Keyboard Shortcuts ---
   useKeyboardShortcuts({
     selectedNodeId, selectedEdgeId,
-    deleteNode, deleteEdge, undo, redo, duplicateNode, selectAll
+    deleteNode, deleteEdge, undo, redo, duplicateNode, selectAll,
+    onCommandBar: () => openCommandBar('root'),
+    onSearch: () => openCommandBar('search'),
+    onShortcutsHelp: () => useFlowStore.getState().setShortcutsHelpOpen(true)
   });
 
   // --- AI ---
   const { isGenerating, handleAIRequest } = useAIGeneration(
-    nodes, edges, setNodes, setEdges, recordHistory, fitView
+    recordHistory
   );
 
   // --- Export ---
   const { fileInputRef, handleExport, handleExportJSON, handleImportJSON, onFileImport } = useFlowExport(
-    nodes, edges, setNodes, setEdges, recordHistory, fitView, reactFlowWrapper
+    recordHistory, reactFlowWrapper
   );
 
   // --- Auto Layout (dagre) ---
@@ -447,41 +260,17 @@ const FlowEditor = () => {
 
   // Selection Mode
   const [isSelectMode, setIsSelectMode] = useState(false);
-  const [isSelectionModifierPressed, setIsSelectionModifierPressed] = useState(false);
-
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Meta' || e.key === 'Control') setIsSelectionModifierPressed(true);
-    };
-    const handleKeyUp = (e: KeyboardEvent) => {
-      if (e.key === 'Meta' || e.key === 'Control') setIsSelectionModifierPressed(false);
-    };
-    // Reset modifier when window loses focus (prevents stuck state)
-    const handleBlur = () => setIsSelectionModifierPressed(false);
-
-    window.addEventListener('keydown', handleKeyDown);
-    window.addEventListener('keyup', handleKeyUp);
-    window.addEventListener('blur', handleBlur);
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-      window.removeEventListener('keyup', handleKeyUp);
-      window.removeEventListener('blur', handleBlur);
-    };
-  }, []);
-
-  // Ctrl/Cmd temporarily enables selection drag; toolbar button permanently toggles
-  const isEffectiveSelectMode = isSelectMode || isSelectionModifierPressed;
 
   return (
     <div className="w-full h-screen bg-slate-50 flex flex-col relative" ref={reactFlowWrapper}>
       {/* Header */}
       <TopNav
         showMiniMap={showMiniMap}
-        toggleMiniMap={() => setShowMiniMap(!showMiniMap)}
+        toggleMiniMap={toggleMiniMap}
         showGrid={showGrid}
-        toggleGrid={() => setShowGrid(!showGrid)}
+        toggleGrid={toggleGrid}
         snapToGrid={snapToGrid}
-        toggleSnapToGrid={() => setSnapToGrid(!snapToGrid)}
+        toggleSnapToGrid={toggleSnap}
         tabs={tabs}
         activeTabId={activeTabId}
         onSwitchTab={handleSwitchTab}
@@ -498,49 +287,16 @@ const FlowEditor = () => {
         onHistory={() => setIsHistoryOpen(true)}
       />
 
-      <ReactFlow
-        nodes={nodes}
-        edges={edges}
-        onNodesChange={onNodesChange}
-        onEdgesChange={onEdgesChange}
-        onConnect={onConnect}
-        onSelectionChange={onSelectionChange}
-        onNodeDragStart={onNodeDragStart}
-        onNodeDragStop={onNodeDragStop}
-        onNodeDoubleClick={onNodeDoubleClick}
-        onNodeContextMenu={onNodeContextMenu}
-        onPaneContextMenu={onPaneContextMenu}
-        onEdgeContextMenu={onEdgeContextMenu}
-        onPaneClick={onPaneClick}
-        onConnectStart={onConnectStart}
-        onConnectEnd={onConnectEnd}
-        nodeTypes={nodeTypes}
-        edgeTypes={edgeTypes}
-        fitView
-        className="bg-slate-50 pt-16"
-        minZoom={0.1}
-        selectionOnDrag={isEffectiveSelectMode}
-        panOnDrag={!isEffectiveSelectMode}
-        selectionMode={isEffectiveSelectMode ? SelectionMode.Partial : undefined}
-        multiSelectionKeyCode="Alt"
-        defaultEdgeOptions={{
-          style: { stroke: '#94a3b8', strokeWidth: 2 },
-          animated: false,
-          markerEnd: { type: MarkerType.ArrowClosed, color: '#94a3b8' },
-        }}
-        connectionLineComponent={CustomConnectionLine}
-        snapToGrid={snapToGrid}
-      >
-        {showGrid && <Background variant={BackgroundVariant.Dots} gap={20} size={1} color="#cbd5e1" />}
-        <NavigationControls />
-        {showMiniMap && (
-          <MiniMap
-            nodeColor={(n) => MINIMAP_NODE_COLORS[n.type ?? ''] ?? '#64748b'}
-            maskColor="rgba(241, 245, 249, 0.7)"
-            className="border border-slate-200 shadow-lg rounded-lg overflow-hidden"
-          />
-        )}
-      </ReactFlow>
+      <ErrorBoundary fallbackMessage="The canvas encountered an error. Click 'Try Again' to recover.">
+        <FlowCanvas
+          undo={undo}
+          redo={redo}
+          canUndo={canUndo}
+          canRedo={canRedo}
+          recordHistory={recordHistory}
+          isSelectMode={isSelectMode}
+        />
+      </ErrorBoundary>
 
       <Toolbar
         onCommandBar={() => openCommandBar('root')}
@@ -562,34 +318,36 @@ const FlowEditor = () => {
         onTogglePanMode={() => setIsSelectMode(false)}
       />
 
-      <CommandBar
-        isOpen={isCommandBarOpen}
-        onClose={() => setIsCommandBarOpen(false)}
-        nodes={nodes}
-        edges={edges}
-        onApply={(newNodes, newEdges) => {
-          recordHistory();
-          setNodes(newNodes);
-          setEdges(newEdges);
-          setTimeout(() => fitView({ duration: 800, padding: 0.2 }), 100);
-        }}
-        onAIGenerate={handleAIRequest}
-        isGenerating={isGenerating}
-        onUndo={undo}
-        onRedo={redo}
-        onFitView={() => fitView({ duration: 800 })}
-        onLayout={onLayout}
-        onSelectTemplate={handleInsertTemplate}
-        initialView={commandBarView}
-        settings={{
-          showGrid,
-          onToggleGrid: () => setShowGrid(!showGrid),
-          snapToGrid,
-          onToggleSnap: () => setSnapToGrid(!snapToGrid),
-          showMiniMap,
-          onToggleMiniMap: () => setShowMiniMap(!showMiniMap),
-        }}
-      />
+      <ErrorBoundary fallbackMessage="The command bar encountered an error.">
+        <CommandBar
+          isOpen={isCommandBarOpen}
+          onClose={() => setIsCommandBarOpen(false)}
+          nodes={nodes}
+          edges={edges}
+          onApply={(newNodes, newEdges) => {
+            recordHistory();
+            setNodes(newNodes);
+            setEdges(newEdges);
+            setTimeout(() => fitView({ duration: 800, padding: 0.2 }), 100);
+          }}
+          onAIGenerate={handleAIRequest}
+          isGenerating={isGenerating}
+          onUndo={undo}
+          onRedo={redo}
+          onFitView={() => fitView({ duration: 800 })}
+          onLayout={onLayout}
+          onSelectTemplate={handleInsertTemplate}
+          initialView={commandBarView}
+          settings={{
+            showGrid,
+            onToggleGrid: toggleGrid,
+            snapToGrid,
+            onToggleSnap: toggleSnap,
+            showMiniMap,
+            onToggleMiniMap: toggleMiniMap,
+          }}
+        />
+      </ErrorBoundary>
 
       {/* TemplatesPanel removed - functionality moved to CommandBar */}
 
@@ -602,21 +360,23 @@ const FlowEditor = () => {
         onDeleteSnapshot={deleteSnapshot}
       />
 
-      <PropertiesPanel
-        selectedNode={selectedNode}
-        selectedEdge={selectedEdge}
-        onChangeNode={updateNodeData}
-        onChangeNodeType={updateNodeType}
-        onChangeEdge={updateEdge}
-        onDeleteNode={deleteNode}
-        onDuplicateNode={duplicateNode}
-        onDeleteEdge={deleteEdge}
-        onUpdateZIndex={updateNodeZIndex}
-        onClose={() => {
-          setSelectedNodeId(null);
-          setSelectedEdgeId(null);
-        }}
-      />
+      <ErrorBoundary fallbackMessage="The properties panel encountered an error.">
+        <PropertiesPanel
+          selectedNode={selectedNode}
+          selectedEdge={selectedEdge}
+          onChangeNode={updateNodeData}
+          onChangeNodeType={updateNodeType}
+          onChangeEdge={updateEdge}
+          onDeleteNode={deleteNode}
+          onDuplicateNode={duplicateNode}
+          onDeleteEdge={deleteEdge}
+          onUpdateZIndex={updateNodeZIndex}
+          onClose={() => {
+            setSelectedNodeId(null);
+            setSelectedEdgeId(null);
+          }}
+        />
+      </ErrorBoundary>
 
       {/* Empty State */}
       {nodes.length === 0 && (
@@ -637,47 +397,8 @@ const FlowEditor = () => {
         onChange={onFileImport}
         className="hidden"
       />
-      {connectMenu && (
-        <ConnectMenu
-          position={connectMenu.position}
-          onClose={() => setConnectMenu(null)}
-          onSelect={(type) => {
-            if (connectMenu) {
-              const flowPos = screenToFlowPosition(connectMenu.position);
-              handleAddAndConnect(type, flowPos, connectMenu.sourceId, connectMenu.sourceHandle);
-            }
-          }}
-        />
-      )}
-      {contextMenu.isOpen && (
-        <ContextMenu
-          {...contextMenu}
-          onClose={onCloseContextMenu}
-          onCopy={copySelection}
-          onPaste={() => {
-            if (contextMenu.position) {
-              pasteSelection(screenToFlowPosition(contextMenu.position));
-            }
-            onCloseContextMenu();
-          }}
-          onDuplicate={() => {
-            if (contextMenu.id) duplicateNode(contextMenu.id);
-            onCloseContextMenu();
-          }}
-          onDelete={() => {
-            if (contextMenu.id) {
-              if (contextMenu.type === 'edge') deleteEdge(contextMenu.id);
-              else deleteNode(contextMenu.id);
-            }
-            onCloseContextMenu();
-          }}
-          onSendToBack={() => {
-            if (contextMenu.id) updateNodeZIndex(contextMenu.id, 'back');
-            onCloseContextMenu();
-          }}
-          canPaste={true}
-        />
-      )}
+
+      <KeyboardShortcutsModal />
     </div>
   );
 };

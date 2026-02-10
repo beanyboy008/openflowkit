@@ -79,6 +79,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
             <button
               onClick={onUndo}
               disabled={!canUndo}
+              aria-label="Undo"
               className={`p-2 rounded-xl transition-all active:scale-95 ${!canUndo ? 'text-slate-300' : 'hover:bg-slate-100 text-slate-500 hover:text-slate-900'}`}
             >
               <Undo2 className="w-4 h-4" />
@@ -88,6 +89,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
             <button
               onClick={onRedo}
               disabled={!canRedo}
+              aria-label="Redo"
               className={`p-2 rounded-xl transition-all active:scale-95 ${!canRedo ? 'text-slate-300' : 'hover:bg-slate-100 text-slate-500 hover:text-slate-900'}`}
             >
               <Redo2 className="w-4 h-4" />
@@ -102,6 +104,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
           <Tooltip text="Select Mode">
             <button
               onClick={onToggleSelectMode}
+              aria-label="Select Mode"
               className={`p-1.5 rounded-lg transition-all ${isSelectMode ? 'bg-white shadow-sm text-indigo-600 ring-1 ring-black/5' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-200/50'}`}
             >
               <MousePointer2 className="w-4 h-4" />
@@ -110,6 +113,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
           <Tooltip text="Pan Mode">
             <button
               onClick={onTogglePanMode}
+              aria-label="Pan Mode"
               className={`p-1.5 rounded-lg transition-all ${!isSelectMode ? 'bg-white shadow-sm text-indigo-600 ring-1 ring-black/5' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-200/50'}`}
             >
               <Hand className="w-4 h-4" />
@@ -124,6 +128,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
           <Tooltip text="Command Bar">
             <button
               onClick={onCommandBar}
+              aria-label="Open Command Bar"
               className={`p-2 rounded-xl transition-all active:scale-95 relative overflow-hidden group ${isCommandBarOpen ? 'bg-indigo-100 text-indigo-700 ring-1 ring-indigo-200' : 'hover:bg-slate-100 text-slate-500 hover:text-slate-900'}`}
             >
               <Wand2 className="w-4 h-4" />
@@ -135,6 +140,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
             <Tooltip text="Add Item">
               <button
                 onClick={() => setShowAddMenu(!showAddMenu)}
+                aria-label="Add Node Menu"
                 className={`p-2 rounded-xl transition-all active:scale-95 ${showAddMenu ? 'bg-slate-100 text-slate-900' : 'hover:bg-slate-100 text-slate-500 hover:text-slate-900'}`}
               >
                 <Plus className="w-4 h-4" />
@@ -160,7 +166,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
           </div>
 
           <Tooltip text="Templates">
-            <button onClick={onTemplates} className="p-2 hover:bg-slate-100 rounded-xl transition-all active:scale-95 text-slate-500 hover:text-slate-900">
+            <button onClick={onTemplates} aria-label="Templates" className="p-2 hover:bg-slate-100 rounded-xl transition-all active:scale-95 text-slate-500 hover:text-slate-900">
               <Layout className="w-4 h-4" />
             </button>
           </Tooltip>
@@ -171,13 +177,13 @@ export const Toolbar: React.FC<ToolbarProps> = ({
         {/* Group 4: Layout & View */}
         <div className="flex items-center gap-0.5 px-1">
           <Tooltip text="Auto Layout">
-            <button onClick={onLayout} className="p-2 hover:bg-slate-100 rounded-xl transition-all active:scale-95 text-slate-500 hover:text-slate-900">
+            <button onClick={onLayout} aria-label="Auto Layout" className="p-2 hover:bg-slate-100 rounded-xl transition-all active:scale-95 text-slate-500 hover:text-slate-900">
               <Workflow className="w-4 h-4" />
             </button>
           </Tooltip>
 
           <Tooltip text="Fit View">
-            <button onClick={onFitView} className="p-2 hover:bg-slate-100 rounded-xl transition-all active:scale-95 text-slate-500 hover:text-slate-900">
+            <button onClick={onFitView} aria-label="Fit View" className="p-2 hover:bg-slate-100 rounded-xl transition-all active:scale-95 text-slate-500 hover:text-slate-900">
               <Maximize className="w-4 h-4" />
             </button>
           </Tooltip>
@@ -188,7 +194,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
         {/* Clear */}
         <div className="flex items-center px-1">
           <Tooltip text="Clear Canvas">
-            <button onClick={onClear} className="p-2 hover:bg-red-50 rounded-xl transition-all active:scale-95 text-slate-400 hover:text-red-600 group">
+            <button onClick={onClear} aria-label="Clear Canvas" className="p-2 hover:bg-red-50 rounded-xl transition-all active:scale-95 text-slate-400 hover:text-red-600 group">
               <Trash2 className="w-4 h-4 group-hover:stroke-red-600 transition-colors" />
             </button>
           </Tooltip>
