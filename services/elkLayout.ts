@@ -86,15 +86,18 @@ export async function getElkLayout(
             // Algorithm Specifics
             ...(algorithm === 'layered' ? {
                 'elk.layered.crossingMinimization.strategy': 'LAYER_SWEEP',
-                'elk.layered.nodePlacement.strategy': 'BRANDES_KOEPF',
+                'elk.layered.crossingMinimization.thoroughness': '10',
+                'elk.layered.nodePlacement.strategy': 'NETWORK_SIMPLEX',
                 'elk.edgeRouting': 'ORTHOGONAL',
-                'elk.layered.spacing.edgeNodeBetweenLayers': '30',
-                'elk.layered.spacing.edgeEdgeBetweenLayers': '20',
+                'elk.layered.spacing.edgeNodeBetweenLayers': '40',
+                'elk.layered.spacing.edgeEdgeBetweenLayers': '30',
+                'elk.separateConnectedComponents': 'true',
+                'elk.layered.considerModelOrder.strategy': 'NODES_AND_EDGES',
             } : {}),
 
             ...(algorithm === 'force' ? {
                 'elk.force.iterations': '300',
-                'elk.force.repulsivePower': String(layerSpacing / 20), // default 0.1?
+                'elk.force.repulsivePower': String(layerSpacing / 20),
             } : {}),
 
             ...(algorithm === 'stress' ? {
@@ -116,7 +119,7 @@ export async function getElkLayout(
                 width: w,
                 height: h,
                 layoutOptions: {
-                    'elk.portConstraints': 'FIXED_ORDER',
+                    'elk.portConstraints': 'FREE',
                 },
             };
         }),

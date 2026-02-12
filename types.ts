@@ -47,6 +47,13 @@ export interface EdgeData {
   opacity?: number; // 0-1, default 1
 }
 
+export interface GlobalEdgeOptions {
+  type: 'default' | 'step' | 'smoothstep' | 'bezier' | 'straight';
+  animated: boolean;
+  strokeWidth: number; // 1-5
+  color?: string; // Optional override
+}
+
 export type FlowEdge = Edge<EdgeData>;
 
 export interface GeneratedFlowData {

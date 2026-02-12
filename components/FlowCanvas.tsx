@@ -12,6 +12,7 @@ import ReactFlow, {
     ConnectionMode
 } from 'reactflow';
 import { useFlowStore } from '../store';
+import { NodeData } from '../types';
 import { useFlowOperations } from '../hooks/useFlowOperations';
 import { useModifierKeys } from '../hooks/useModifierKeys';
 import { useEdgeInteractions } from '../hooks/useEdgeInteractions';
@@ -78,7 +79,8 @@ export const FlowCanvas: React.FC<FlowCanvasProps> = ({
         updateNodeZIndex,
         pasteSelection, copySelection,
         handleAlignNodes, handleDistributeNodes, handleGroupNodes,
-        onEdgeUpdate
+        onEdgeUpdate,
+        onNodeDrag
     } = useFlowOperations(
         recordHistory,
         (position, sourceId, sourceHandle) => setConnectMenu({ position, sourceId, sourceHandle })
@@ -228,6 +230,7 @@ export const FlowCanvas: React.FC<FlowCanvasProps> = ({
                 onEdgeUpdate={onEdgeUpdate}
                 onSelectionChange={onSelectionChange}
                 onNodeDragStart={onNodeDragStart}
+                onNodeDrag={onNodeDrag}
                 onNodeDragStop={onNodeDragStop}
                 onNodeDoubleClick={onNodeDoubleClick}
                 onNodeContextMenu={onNodeContextMenu}
@@ -283,7 +286,7 @@ export const FlowCanvas: React.FC<FlowCanvasProps> = ({
                     onSelect={(type, shape) => {
                         if (connectMenu) {
                             const flowPos = screenToFlowPosition(connectMenu.position);
-                            handleAddAndConnect(type, flowPos, connectMenu.sourceId, connectMenu.sourceHandle, shape);
+                            handleAddAndConnect(type, flowPos, connectMenu.sourceId, connectMenu.sourceHandle, shape as NodeData['shape']);
                         }
                     }}
                 />

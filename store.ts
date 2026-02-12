@@ -9,15 +9,21 @@ import {
     Connection,
     addEdge,
 } from 'reactflow';
-import { FlowNode, FlowEdge, FlowTab, FlowHistoryState } from './types';
+import { FlowNode, FlowEdge, FlowTab, FlowHistoryState, GlobalEdgeOptions } from './types';
+
 import { INITIAL_NODES, INITIAL_EDGES, createDefaultEdge } from './constants';
+import { NODE_DEFAULTS } from './theme';
+import { assignSmartHandles } from './services/smartEdgeRouting';
 
 interface ViewSettings {
     showGrid: boolean;
     snapToGrid: boolean;
     showMiniMap: boolean;
     isShortcutsHelpOpen: boolean;
+    defaultIconsEnabled: boolean;
+    smartRoutingEnabled: boolean;
 }
+
 
 interface FlowState {
     // Nodes & Edges (Active Tab)
@@ -30,6 +36,7 @@ interface FlowState {
 
     // View Settings
     viewSettings: ViewSettings;
+    globalEdgeOptions: GlobalEdgeOptions;
 
     // Selection
     selectedNodeId: string | null;
@@ -55,6 +62,10 @@ interface FlowState {
     toggleMiniMap: () => void;
     setShortcutsHelpOpen: (open: boolean) => void;
     setViewSettings: (settings: Partial<ViewSettings>) => void;
+
+    setGlobalEdgeOptions: (options: Partial<GlobalEdgeOptions>) => void;
+    setDefaultIconsEnabled: (enabled: boolean) => void;
+    setSmartRoutingEnabled: (enabled: boolean) => void;
 
     // Selection Actions
     setSelectedNodeId: (id: string | null) => void;
@@ -82,6 +93,14 @@ export const useFlowStore = create<FlowState>((set, get) => ({
         snapToGrid: true,
         showMiniMap: true,
         isShortcutsHelpOpen: false,
+        defaultIconsEnabled: true,
+        smartRoutingEnabled: true,
+    },
+
+    globalEdgeOptions: {
+        type: 'default',
+        animated: false,
+        strokeWidth: 2,
     },
 
     selectedNodeId: null,
@@ -110,11 +129,20 @@ export const useFlowStore = create<FlowState>((set, get) => ({
     },
 
     onConnect: (connection: Connection) => {
+        const { globalEdgeOptions } = get();
+        const newEdge = createDefaultEdge(connection.source!, connection.target!);
+
+        // Apply global options
+        if (globalEdgeOptions.type !== 'default') newEdge.type = globalEdgeOptions.type;
+        newEdge.animated = globalEdgeOptions.animated;
+        newEdge.style = {
+            ...newEdge.style,
+            strokeWidth: globalEdgeOptions.strokeWidth,
+            ...(globalEdgeOptions.color ? { stroke: globalEdgeOptions.color } : {})
+        };
+
         set({
-            edges: addEdge(
-                createDefaultEdge(connection.source!, connection.target!),
-                get().edges
-            ),
+            edges: addEdge(newEdge, get().edges),
         });
     },
 
@@ -226,6 +254,65 @@ export const useFlowStore = create<FlowState>((set, get) => ({
     setViewSettings: (settings) => set((state) => ({
         viewSettings: { ...state.viewSettings, ...settings }
     })),
+    setGlobalEdgeOptions: (options) => set((state) => {
+        const newOptions = { ...state.globalEdgeOptions, ...options };
+
+        // Update all existing edges
+        const updatedEdges = state.edges.map(e => ({
+            ...e,
+            type: newOptions.type === 'default' ? undefined : newOptions.type, // undefined falls back to default
+            animated: newOptions.animated,
+            style: {
+                ...e.style,
+                strokeWidth: newOptions.strokeWidth,
+                ...(newOptions.color ? { stroke: newOptions.color } : {})
+            }
+        }));
+
+        return {
+            globalEdgeOptions: newOptions,
+            edges: updatedEdges,
+        };
+    }),
+    setDefaultIconsEnabled: (enabled) => set((state) => {
+        // Update preference
+        const newViewSettings = { ...state.viewSettings, defaultIconsEnabled: enabled };
+
+        // Update nodes
+        const updatedNodes = state.nodes.map(node => {
+            const defaultIcon = NODE_DEFAULTS[node.type || 'process']?.icon;
+
+            if (enabled) {
+                // Turning ON: If no icon and no custom icon, restore default
+                if (!node.data.icon && !node.data.customIconUrl) {
+                    return { ...node, data: { ...node.data, icon: defaultIcon } };
+                }
+            } else {
+                // Turning OFF: If icon matches default, remove it
+                if (node.data.icon === defaultIcon) {
+                    return { ...node, data: { ...node.data, icon: undefined } };
+                }
+            }
+            return node;
+        });
+
+        return {
+            viewSettings: newViewSettings,
+            nodes: updatedNodes
+        };
+    }),
+
+    setSmartRoutingEnabled: (enabled) => set((state) => {
+        let newEdges = state.edges;
+        if (enabled) {
+            // Apply smart routing immediately when enabled
+            newEdges = assignSmartHandles(state.nodes, state.edges);
+        }
+        return {
+            viewSettings: { ...state.viewSettings, smartRoutingEnabled: enabled },
+            edges: newEdges
+        };
+    }),
 
     // Selection Actions
     setSelectedNodeId: (id) => set({ selectedNodeId: id }),

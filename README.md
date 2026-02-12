@@ -22,7 +22,7 @@ Most diagramming tools are either "Code Only" (Mermaid/PlantUML) or "Drag & Drop
 
 - **📝 Mermaid & DSL Native**: Paste your Mermaid code, and it instantly renders as editable nodes.
 - **🎨 Designed for Figma**: Copy your entire flow and paste it into Figma as **fully editable layers**. Text remains text.
-- **✨ Beautiful Defaults**: No more ugly charts. FlowMind uses a premium glassmorphic UI with auto-layout.
+- **✨ Beautiful Defaults**: No more ugly charts. FlowMind uses a premium glassmorphic UI with auto-layout that looks 10x better than standard Mermaid renders.
 - **⚡️ Rapid Prototyping**: Text-to-Flow capabilities let you scaffold complex systems in seconds.
 - **🧠 AI Copilot**: Stuck? Ask the built-in AI to "Add error handling" or "Explain this flow".
 
@@ -36,10 +36,11 @@ Stop screenshotting your diagrams. FlowMind generates clean, structured SVGs tha
 - **Vector Fidelity**: Perfect rounded corners, gradients, and stroke precision.
 - **One-Click Copy**: Just hit "Copy for Figma" and paste (Cmd+V).
 
-### 🛠 Diagram as Code
+### 🛠 Advanced Diagram as Code
 First-class support for **Mermaid.js** and our own **FlowMind DSL**.
-- **Import**: Paste `graph TD; A-->B;` and see it come to life.
-- **Export**: Get clean Mermaid, PlantUML, or JSON output for your docs.
+- **Expanded Support**: Now supporting **Flowcharts**, **State Diagrams**, and **Subgraphs** (Groups).
+- **Theme Integration**: We map Mermaid's `classDef` and `style` directives to our premium Tailwind-based design system.
+- **Import**: Paste `graph TD; A-->B;` or `stateDiagram-v2; [*]-->State1;` and see it come to life.
 - **Live Sync**: Tweaking the visual graph updates the underlying code structure.
 
 ### 💎 Premium UX & Smart Editor
