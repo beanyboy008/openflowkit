@@ -55,6 +55,8 @@ Generate entire diagrams from a text prompt using **Gemini AI** (BYOK — Bring 
 - **Privacy First**: Your API key stays on your device. No server-side storage.
 - **OpenFlow DSL V2**: AI outputs the type-safe DSL, then auto-renders it on canvas.
 
+![React Flow Canvas](public/readme/3.png)
+
 ### 🖌️ Native Figma Export
 Generate clean, structured SVGs that behave like native Figma layers.
 - **Vector Fidelity**: Perfect rounded corners and gradients.
@@ -106,7 +108,6 @@ Precision layout tools for polishing diagrams:
 ### ⚛️ Built on React Flow
 Leveraging the industry standard for node-based UIs, OpenFlowKit is highly performant and infinitely extensible.
 
-![React Flow Canvas](public/readme/3.png)
 
 ---
 
