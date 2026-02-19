@@ -232,7 +232,7 @@ export const useFlowStore = create<FlowState>()(
             tabs: [
                 {
                     id: 'tab-1',
-                    name: 'Untitled Flow',
+                    name: 'Richard Norris Scaling Plan',
                     nodes: INITIAL_NODES,
                     edges: INITIAL_EDGES,
                     history: { past: [], future: [] },

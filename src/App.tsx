@@ -152,7 +152,7 @@ function App(): React.JSX.Element {
     <Router>
       <ReactFlowProvider>
         <Routes>
-          <Route path="/" element={<LandingPageRoute />} />
+          <Route path="/" element={<MobileGate><FlowCanvasRoute /></MobileGate>} />
           <Route path="/home" element={<MobileGate><HomePageRoute /></MobileGate>} />
           <Route path="/settings" element={<MobileGate><HomePageRoute /></MobileGate>} />
           <Route path="/canvas" element={<MobileGate><FlowCanvasRoute /></MobileGate>} />

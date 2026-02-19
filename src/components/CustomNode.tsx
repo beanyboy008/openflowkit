@@ -1,4 +1,4 @@
-import React, { memo, useMemo } from 'react';
+import React, { memo, useMemo, useState, useCallback, useRef, useEffect } from 'react';
 import { Handle, Position, NodeProps, NodeResizer } from 'reactflow';
 import { NodeData } from '@/lib/types';
 
@@ -6,6 +6,7 @@ import { ICON_MAP } from './IconMap';
 import MemoizedMarkdown from './MemoizedMarkdown';
 import { NODE_COLOR_PALETTE, NODE_EXPORT_COLORS } from '../theme';
 import { useDesignSystem } from '../hooks/useDesignSystem';
+import { useFlowStore } from '../store';
 
 const getDefaults = (type: string) => {
   switch (type) {
@@ -18,8 +19,58 @@ const getDefaults = (type: string) => {
   }
 }
 
-const CustomNode = ({ data, type, selected }: NodeProps<NodeData>) => {
+const CustomNode = ({ id, data, type, selected }: NodeProps<NodeData>) => {
   const designSystem = useDesignSystem();
+  const setNodes = useFlowStore((s) => s.setNodes);
+
+  const [editingLabel, setEditingLabel] = useState(false);
+  const [editingSubLabel, setEditingSubLabel] = useState(false);
+  const [labelDraft, setLabelDraft] = useState(data.label || '');
+  const [subLabelDraft, setSubLabelDraft] = useState(data.subLabel || '');
+  const labelRef = useRef<HTMLTextAreaElement>(null);
+  const subLabelRef = useRef<HTMLTextAreaElement>(null);
+
+  // Sync drafts when data changes externally
+  useEffect(() => { setLabelDraft(data.label || ''); }, [data.label]);
+  useEffect(() => { setSubLabelDraft(data.subLabel || ''); }, [data.subLabel]);
+
+  const commitLabel = useCallback(() => {
+    setEditingLabel(false);
+    setNodes((nodes) => nodes.map((n) =>
+      n.id === id ? { ...n, data: { ...n.data, label: labelDraft } } : n
+    ));
+  }, [id, labelDraft, setNodes]);
+
+  const commitSubLabel = useCallback(() => {
+    setEditingSubLabel(false);
+    setNodes((nodes) => nodes.map((n) =>
+      n.id === id ? { ...n, data: { ...n.data, subLabel: subLabelDraft } } : n
+    ));
+  }, [id, subLabelDraft, setNodes]);
+
+  const stopPropagation = useCallback((e: React.KeyboardEvent | React.MouseEvent) => {
+    e.stopPropagation();
+  }, []);
+
+  const handleLabelKeyDown = useCallback((e: React.KeyboardEvent) => {
+    e.stopPropagation();
+    if (e.key === 'Escape') { setLabelDraft(data.label || ''); setEditingLabel(false); }
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); commitLabel(); }
+  }, [commitLabel, data.label]);
+
+  const handleSubLabelKeyDown = useCallback((e: React.KeyboardEvent) => {
+    e.stopPropagation();
+    if (e.key === 'Escape') { setSubLabelDraft(data.subLabel || ''); setEditingSubLabel(false); }
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); commitSubLabel(); }
+  }, [commitSubLabel, data.subLabel]);
+
+  useEffect(() => {
+    if (editingLabel && labelRef.current) { labelRef.current.focus(); labelRef.current.select(); }
+  }, [editingLabel]);
+
+  useEffect(() => {
+    if (editingSubLabel && subLabelRef.current) { subLabelRef.current.focus(); subLabelRef.current.select(); }
+  }, [editingSubLabel]);
 
   const defaults = getDefaults(type || 'process');
   const activeColor = data.color || defaults.color;
@@ -169,8 +220,8 @@ const CustomNode = ({ data, type, selected }: NodeProps<NodeData>) => {
         )}
 
         {/* Content Layer */}
-        <div className={`relative z-10 p-4 flex ${layoutClass} items-center 
-          ${isComplexShape && activeShape === 'diamond' ? 'px-8 py-6' : ''} 
+        <div className={`relative z-10 p-4 flex ${layoutClass} items-center
+          ${isComplexShape && activeShape === 'diamond' ? 'px-8 py-6' : ''}
           ${isComplexShape && activeShape === 'hexagon' ? 'px-8' : ''}
           ${isComplexShape && activeShape === 'parallelogram' ? 'px-8' : ''}
           ${isComplexShape && activeShape === 'cylinder' ? 'pt-8 pb-4' : ''}
@@ -195,28 +246,73 @@ const CustomNode = ({ data, type, selected }: NodeProps<NodeData>) => {
 
           {/* Text Content */}
           <div className={`flex flex-col min-w-0 ${!hasIcon ? 'w-full' : ''} ${fontFamilyClass}`} style={{ textAlign: data.align || 'center', ...fontFamilyStyle }}>
-            <div
-              className={`leading-tight block break-words markdown-content [&>p]:m-0 ${fontSizeClass}`}
-              style={{
-                ...fontSizeStyle,
-                // fontFamily: 'inherit', // Redundant if parent has class
-                fontWeight: data.fontWeight || 'bold',
-                fontStyle: data.fontStyle || 'normal',
-              }}
-            >
-              <MemoizedMarkdown content={data.label || 'Node'} />
-            </div>
-            {data.subLabel && (
+            {editingLabel ? (
+              <textarea
+                ref={labelRef}
+                className={`w-full bg-white/90 border border-indigo-400 rounded px-1 py-0.5 outline-none resize-none leading-tight ${fontSizeClass}`}
+                style={{
+                  ...fontSizeStyle,
+                  fontWeight: data.fontWeight || 'bold',
+                  fontStyle: data.fontStyle || 'normal',
+                  textAlign: data.align || 'center',
+                }}
+                value={labelDraft}
+                onChange={(e) => setLabelDraft(e.target.value)}
+                onBlur={commitLabel}
+                onKeyDown={handleLabelKeyDown}
+                onClick={stopPropagation}
+                onMouseDown={stopPropagation}
+                rows={Math.max(1, labelDraft.split('\n').length)}
+              />
+            ) : (
               <div
-                className="text-xs text-slate-600 mt-1 leading-normal markdown-content break-words"
+                className={`leading-tight block break-words markdown-content [&>p]:m-0 cursor-text ${fontSizeClass}`}
+                style={{
+                  ...fontSizeStyle,
+                  fontWeight: data.fontWeight || 'bold',
+                  fontStyle: data.fontStyle || 'normal',
+                }}
+                onDoubleClick={(e) => { e.stopPropagation(); setEditingLabel(true); }}
+              >
+                <MemoizedMarkdown content={data.label || 'Node'} />
+              </div>
+            )}
+            {editingSubLabel ? (
+              <textarea
+                ref={subLabelRef}
+                className="w-full bg-white/90 border border-indigo-400 rounded px-1 py-0.5 outline-none resize-none text-xs text-slate-600 mt-1 leading-normal"
+                style={{
+                  fontWeight: 'normal',
+                  fontStyle: 'normal',
+                  textAlign: data.align || 'center',
+                }}
+                value={subLabelDraft}
+                onChange={(e) => setSubLabelDraft(e.target.value)}
+                onBlur={commitSubLabel}
+                onKeyDown={handleSubLabelKeyDown}
+                onClick={stopPropagation}
+                onMouseDown={stopPropagation}
+                rows={Math.max(2, subLabelDraft.split('\n').length)}
+              />
+            ) : data.subLabel ? (
+              <div
+                className="text-xs text-slate-600 mt-1 leading-normal markdown-content break-words cursor-text"
                 style={{
                   fontWeight: 'normal',
                   fontStyle: 'normal',
                   textAlign: data.align || 'center',
                   opacity: 0.85
                 }}
+                onDoubleClick={(e) => { e.stopPropagation(); setEditingSubLabel(true); }}
               >
                 <MemoizedMarkdown content={data.subLabel} />
+              </div>
+            ) : (
+              <div
+                className="text-xs text-slate-400 mt-1 cursor-text italic"
+                onDoubleClick={(e) => { e.stopPropagation(); setSubLabelDraft(''); setEditingSubLabel(true); }}
+              >
+                Double-click to add details
               </div>
             )}
           </div>
