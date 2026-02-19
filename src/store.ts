@@ -106,8 +106,8 @@ export const DEFAULT_BRAND_CONFIG: BrandConfig = {
     logoUrl: null,
     faviconUrl: '/favicon.svg',
     apiKey: import.meta.env.VITE_ANTHROPIC_API_KEY || undefined,
-    aiModel: 'claude-sonnet-4-6',
-    aiProvider: 'claude',
+    aiModel: 'gpt-4o',
+    aiProvider: 'openai',
     customBaseUrl: undefined,
     logoStyle: 'both',
     colors: {
@@ -255,7 +255,7 @@ export const useFlowStore = create<FlowState>()(
 
             globalEdgeOptions: {
                 type: 'smoothstep',
-                animated: true,
+                animated: false,
                 strokeWidth: 2,
             },
 

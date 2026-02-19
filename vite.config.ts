@@ -8,6 +8,18 @@ export default defineConfig(({ mode }) => {
     server: {
       port: 3000,
       host: '0.0.0.0',
+      proxy: {
+        '/api/openai': {
+          target: 'https://api.openai.com/v1',
+          changeOrigin: true,
+          rewrite: (p) => p.replace(/^\/api\/openai/, ''),
+        },
+        '/api/anthropic': {
+          target: 'https://api.anthropic.com/v1',
+          changeOrigin: true,
+          rewrite: (p) => p.replace(/^\/api\/anthropic/, ''),
+        },
+      },
     },
     plugins: [react()],
     define: {

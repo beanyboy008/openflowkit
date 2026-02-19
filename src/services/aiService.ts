@@ -2,8 +2,10 @@ import { getSystemInstruction, ChatMessage, generateDiagramFromChat as generateD
 
 export type AIProvider = 'gemini' | 'openai' | 'claude' | 'groq' | 'nvidia' | 'cerebras' | 'custom';
 
+// In dev, Vite proxies /api/openai → api.openai.com/v1 (avoids CORS).
+// In prod, Vercel serverless functions at /api/openai handle the proxy.
 const PROVIDER_BASE_URLS: Record<string, string> = {
-    openai: 'https://api.openai.com/v1',
+    openai: '/api/openai',
     groq: 'https://api.groq.com/openai/v1',
     nvidia: 'https://integrate.api.nvidia.com/v1',
     cerebras: 'https://api.cerebras.ai/v1',
@@ -11,7 +13,7 @@ const PROVIDER_BASE_URLS: Record<string, string> = {
 
 const DEFAULT_MODELS: Record<string, string> = {
     gemini: 'gemini-2.5-flash-lite',
-    openai: 'gpt-5-mini',
+    openai: 'gpt-4o',
     claude: 'claude-sonnet-4-6',
     groq: 'meta-llama/llama-4-scout-17b-16e-instruct',
     nvidia: 'meta/llama-4-scout-17b-16e-instruct',
@@ -65,7 +67,7 @@ async function callClaude(
     model: string,
     messages: { role: string; content: string }[]
 ): Promise<string> {
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
+    const response = await fetch('/api/anthropic/messages', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',

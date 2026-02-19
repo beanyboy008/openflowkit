@@ -10,7 +10,7 @@ export const EDGE_LABEL_BG_STYLE = { fill: '#ffffff', stroke: '#cbd5e1', strokeW
 export const DEFAULT_EDGE_OPTIONS = {
   type: 'smoothstep' as const,
   markerEnd: { type: MarkerType.ArrowClosed },
-  animated: true,
+  animated: false,
   style: EDGE_STYLE,
   labelStyle: EDGE_LABEL_STYLE,
   labelBgStyle: EDGE_LABEL_BG_STYLE,
@@ -71,90 +71,57 @@ export const INITIAL_NODES: Node[] = [
   {
     id: 'rn-kpi',
     type: NodeType.ANNOTATION,
-    position: { x: 850, y: -80 },
+    position: { x: 850, y: 0 },
     data: {
       label: 'Target KPIs',
       subLabel: '$50–$300 cost per booked call\n85% show-up rate\n50% close rate\n30-day nurture window',
     },
   },
 
-  // ========== TRAFFIC: PERSONAL BRAND (top-left) ==========
+  // ========== TRAFFIC: PERSONAL BRAND (left column) ==========
   {
     id: 'rn-brand',
     type: NodeType.PROCESS,
-    position: { x: -50, y: 80 },
+    position: { x: 0, y: 80 },
     data: {
       label: 'Personal Brand',
-      subLabel: '30 videos/month\n70% short form / 30% long form\nAll platforms\nWinners → test as hooks for ads\nSpend X to push videos out\nWinners → feed into Hammer Them',
+      subLabel: 'All platforms\nWinners → test as hooks for ads\nWinners → feed into Hammer Them',
       icon: 'Video',
       color: 'emerald',
     },
   },
 
-  // ========== TRAFFIC: PAID ADS (top-right header) ==========
+  // ========== TRAFFIC: PAID ADS (right column) ==========
   {
     id: 'rn-paid',
     type: NodeType.PROCESS,
-    position: { x: 650, y: 30 },
+    position: { x: 650, y: 80 },
     data: {
       label: 'Paid Ads',
-      subLabel: 'Facebook (primary) + YouTube (secondary)\nNot reliant on Richard',
+      subLabel: 'Facebook (primary) + YouTube (secondary)\nUGC, image, brand character ads\nTest 12/month each\nDisqualify in ad copy\nWarm up FB with non-selling videos',
       icon: 'Megaphone',
       color: 'blue',
     },
   },
 
-  // --- Ad Types (under Paid Ads) ---
+  // ========== VIDEOS (under Personal Brand) ==========
   {
-    id: 'rn-ugc',
+    id: 'rn-videos',
     type: NodeType.PROCESS,
-    position: { x: 480, y: 280 },
+    position: { x: 0, y: 320 },
     data: {
-      label: 'UGC Ads',
-      subLabel: 'Test 12/month\nDisqualify in ad copy',
-      icon: 'Users',
-      color: 'blue',
-    },
-  },
-  {
-    id: 'rn-image',
-    type: NodeType.PROCESS,
-    position: { x: 700, y: 280 },
-    data: {
-      label: 'Image Ads',
-      subLabel: 'Test 12/month',
-      icon: 'Image',
-      color: 'blue',
-    },
-  },
-  {
-    id: 'rn-character',
-    type: NodeType.PROCESS,
-    position: { x: 920, y: 280 },
-    data: {
-      label: 'Brand Character Ads',
-      subLabel: 'Shoot 12 hooks/month\nDisqualify in ad copy',
-      icon: 'UserCircle',
-      color: 'blue',
+      label: 'Videos',
+      subLabel: '30 videos/month\n70% short form / 30% long form\nSpend X to push videos out',
+      icon: 'Play',
+      color: 'emerald',
     },
   },
 
-  // --- Warm Up FB (annotation near Paid Ads) ---
-  {
-    id: 'rn-warmup',
-    type: NodeType.ANNOTATION,
-    position: { x: 1050, y: 50 },
-    data: {
-      label: 'Warm Up Facebook',
-      subLabel: 'Non-selling videos to warm up ad account',
-    },
-  },
-
-  // ========== MANYCHAT + QUIZ (under Personal Brand) ==========
+  // ========== MANYCHAT (under Videos) ==========
   {
     id: 'rn-manychat',
     type: NodeType.PROCESS,
-    position: { x: -50, y: 300 },
+    position: { x: 0, y: 560 },
     data: {
       label: 'ManyChat',
       subLabel: 'Captures engagement from content\nDMs, comments, keyword triggers',
@@ -162,13 +129,15 @@ export const INITIAL_NODES: Node[] = [
       color: 'pink',
     },
   },
+
+  // ========== DISQUALIFICATION QUIZ ==========
   {
     id: 'rn-quiz',
-    type: NodeType.PROCESS,
-    position: { x: -50, y: 480 },
+    type: NodeType.DECISION,
+    position: { x: 0, y: 800 },
     data: {
-      label: 'ManyChat Quiz',
-      subLabel: 'Qualifies leads before opt-in',
+      label: 'Disqualification Quiz',
+      subLabel: 'Qualifies leads before opt-in\nFilters out non-serious prospects',
       icon: 'ClipboardList',
       color: 'amber',
     },
@@ -178,7 +147,7 @@ export const INITIAL_NODES: Node[] = [
   {
     id: 'rn-optin',
     type: NodeType.PROCESS,
-    position: { x: 300, y: 500 },
+    position: { x: 300, y: 1040 },
     data: {
       label: 'Opt-In Page',
       subLabel: 'PropertyConsulting.io\nPop-up: name, email, phone',
@@ -189,7 +158,7 @@ export const INITIAL_NODES: Node[] = [
   {
     id: 'rn-vsl',
     type: NodeType.PROCESS,
-    position: { x: 300, y: 720 },
+    position: { x: 300, y: 1280 },
     data: {
       label: 'VSL',
       subLabel: 'Reshoot video + add metrics',
@@ -200,10 +169,10 @@ export const INITIAL_NODES: Node[] = [
   {
     id: 'rn-qualify',
     type: NodeType.DECISION,
-    position: { x: 300, y: 950 },
+    position: { x: 300, y: 1520 },
     data: {
       label: 'Qualification Pop-Up',
-      subLabel: 'Fillout form\nHow many rental properties?\nLiquid capital: 25K / 25-50K / 50-100K / 100-150K / 150K+\nQualified = 50K+',
+      subLabel: 'Fillout form\nHow many rental properties?\nLiquid capital: 25K–150K+\nQualified = 50K+',
       icon: 'ClipboardCheck',
       color: 'amber',
     },
@@ -213,7 +182,7 @@ export const INITIAL_NODES: Node[] = [
   {
     id: 'rn-pixel',
     type: NodeType.PROCESS,
-    position: { x: 650, y: 1150 },
+    position: { x: 650, y: 1520 },
     data: {
       label: 'FB Pixel Fires',
       subLabel: 'Fillout → Zapier → FB CAPI\nConversion event sent',
@@ -226,7 +195,7 @@ export const INITIAL_NODES: Node[] = [
   {
     id: 'rn-book',
     type: NodeType.PROCESS,
-    position: { x: 300, y: 1350 },
+    position: { x: 300, y: 1760 },
     data: {
       label: 'Book a Call',
       subLabel: 'Fillout calendar\nBoth qualified & non-qualified book',
@@ -239,57 +208,18 @@ export const INITIAL_NODES: Node[] = [
   {
     id: 'rn-booknote',
     type: NodeType.ANNOTATION,
-    position: { x: 680, y: 1380 },
+    position: { x: 650, y: 1760 },
     data: {
       label: 'Future: Double Bookings',
       subLabel: 'Later: double-book or use another closer for non-qualified calls',
     },
   },
 
-  // --- Post-Book Qualification Page ---
-  {
-    id: 'rn-postbookpage',
-    type: NodeType.PROCESS,
-    position: { x: 300, y: 1600 },
-    data: {
-      label: 'Post-Book Qualification Page',
-      subLabel: 'Qualification VSL\nGets them warmed up for the call',
-      icon: 'Shield',
-      color: 'violet',
-    },
-  },
-
-  // --- Sales Call ---
-  {
-    id: 'rn-call',
-    type: NodeType.PROCESS,
-    position: { x: 300, y: 1850 },
-    data: {
-      label: 'Sales Call',
-      subLabel: '85% show-up rate target\nDouble book to achieve',
-      icon: 'PhoneCall',
-      color: 'emerald',
-    },
-  },
-
-  // --- Close ---
-  {
-    id: 'rn-close',
-    type: NodeType.END,
-    position: { x: 300, y: 2100 },
-    data: {
-      label: 'Close',
-      subLabel: '50% close rate target\nPayment plans set up\nFrame: pay nothing up front, earn from properties',
-      icon: 'CheckCircle',
-      color: 'emerald',
-    },
-  },
-
-  // ========== NURTURE SYSTEM (left column) ==========
+  // ========== NURTURE (left column) + POST-BOOK (center column) ==========
   {
     id: 'rn-nurture30',
     type: NodeType.PROCESS,
-    position: { x: -350, y: 1350 },
+    position: { x: 0, y: 2000 },
     data: {
       label: '30-Day Email & SMS Nurture',
       subLabel: 'Drop-offs / no-shows\nDrives prospects back to book a call',
@@ -298,9 +228,21 @@ export const INITIAL_NODES: Node[] = [
     },
   },
   {
+    id: 'rn-postbookpage',
+    type: NodeType.PROCESS,
+    position: { x: 300, y: 2000 },
+    data: {
+      label: 'Post-Book Qualification Page',
+      subLabel: 'Qualification VSL\nGets them warmed up for the call',
+      icon: 'Shield',
+      color: 'violet',
+    },
+  },
+
+  {
     id: 'rn-hammer',
     type: NodeType.PROCESS,
-    position: { x: -350, y: 1600 },
+    position: { x: 0, y: 2240 },
     data: {
       label: '"Hammer Them" Retargeting',
       subLabel: 'Jeremy Haynes strategy\nRetargeting ads between book → call\nIndoctrination videos\nIncludes personal brand winners',
@@ -309,9 +251,21 @@ export const INITIAL_NODES: Node[] = [
     },
   },
   {
+    id: 'rn-call',
+    type: NodeType.PROCESS,
+    position: { x: 300, y: 2240 },
+    data: {
+      label: 'Sales Call',
+      subLabel: '85% show-up rate target\nDouble book to achieve',
+      icon: 'PhoneCall',
+      color: 'emerald',
+    },
+  },
+
+  {
     id: 'rn-postbookems',
     type: NodeType.PROCESS,
-    position: { x: -350, y: 1850 },
+    position: { x: 0, y: 2480 },
     data: {
       label: 'Post-Booking Email & SMS',
       subLabel: 'Gets them to show up',
@@ -319,12 +273,23 @@ export const INITIAL_NODES: Node[] = [
       color: 'pink',
     },
   },
+  {
+    id: 'rn-close',
+    type: NodeType.END,
+    position: { x: 300, y: 2480 },
+    data: {
+      label: 'Close',
+      subLabel: '50% close rate target\nPayment plans set up\nFrame: pay nothing up front, earn from properties',
+      icon: 'CheckCircle',
+      color: 'emerald',
+    },
+  },
 
-  // ========== FUTURE (bottom) ==========
+  // ========== FUTURE (bottom center) ==========
   {
     id: 'rn-future',
     type: NodeType.CUSTOM,
-    position: { x: 300, y: 2350 },
+    position: { x: 300, y: 2720 },
     data: {
       label: 'Backend — FUTURE',
       subLabel: 'Ascension upsells\nCross-sells\nRevenue retention\nAfter front end works',
@@ -335,13 +300,9 @@ export const INITIAL_NODES: Node[] = [
 ];
 
 export const INITIAL_EDGES: Edge[] = [
-  // Paid Ads → Ad Types
-  createDefaultEdge('rn-paid', 'rn-ugc', undefined, 'e-paid-ugc'),
-  createDefaultEdge('rn-paid', 'rn-image', undefined, 'e-paid-image'),
-  createDefaultEdge('rn-paid', 'rn-character', undefined, 'e-paid-character'),
-
-  // Personal Brand → ManyChat → Quiz → Opt-In
-  createDefaultEdge('rn-brand', 'rn-manychat', undefined, 'e-brand-manychat'),
+  // Personal Brand → Videos → ManyChat → Disqualification Quiz → Opt-In
+  createDefaultEdge('rn-brand', 'rn-videos', undefined, 'e-brand-videos'),
+  createDefaultEdge('rn-videos', 'rn-manychat', undefined, 'e-videos-manychat'),
   createDefaultEdge('rn-manychat', 'rn-quiz', undefined, 'e-manychat-quiz'),
   createDefaultEdge('rn-quiz', 'rn-optin', undefined, 'e-quiz-optin'),
 
@@ -354,22 +315,18 @@ export const INITIAL_EDGES: Edge[] = [
 
   // Qualification Fork
   createDefaultEdge('rn-qualify', 'rn-pixel', 'Qualified 50K+', 'e-qualify-pixel'),
-  createDefaultEdge('rn-qualify', 'rn-book', '< 50K', 'e-qualify-book'),
+  createDefaultEdge('rn-qualify', 'rn-book', undefined, 'e-qualify-book'),
   createDefaultEdge('rn-pixel', 'rn-book', undefined, 'e-pixel-book'),
 
-  // Funnel continues
+  // Post-Book: center column (main path)
   createDefaultEdge('rn-book', 'rn-postbookpage', undefined, 'e-book-postbookpage'),
   createDefaultEdge('rn-postbookpage', 'rn-call', undefined, 'e-postbookpage-call'),
   createDefaultEdge('rn-call', 'rn-close', undefined, 'e-call-close'),
 
-  // Nurture: 30-Day safety net
-  createDefaultEdge('rn-book', 'rn-nurture30', 'Drop-offs / No-shows', 'e-book-nurture30'),
-  createDefaultEdge('rn-nurture30', 'rn-book', 'Re-engage', 'e-nurture30-book'),
-
-  // Nurture: Post-booking tracks
+  // Nurture: left column (drop-offs go down, feed into call)
+  createDefaultEdge('rn-book', 'rn-nurture30', 'Drop-offs', 'e-book-nurture30'),
   createDefaultEdge('rn-book', 'rn-hammer', 'Booked', 'e-book-hammer'),
-  createDefaultEdge('rn-book', 'rn-postbookems', 'Booked', 'e-book-postbookems'),
-  createDefaultEdge('rn-hammer', 'rn-call', undefined, 'e-hammer-call'),
+  createDefaultEdge('rn-hammer', 'rn-postbookems', undefined, 'e-hammer-postbookems'),
   createDefaultEdge('rn-postbookems', 'rn-call', 'Show up', 'e-postbookems-call'),
 
   // Future
@@ -408,6 +365,8 @@ export const KEYBOARD_SHORTCUTS = [
   {
     title: 'Navigation',
     items: [
+      { label: 'Select Mode', keys: ['V'] },
+      { label: 'Pan Mode', keys: ['H'] },
       { label: 'Pan Canvas', keys: ['Space', 'Drag'] },
       { label: 'Zoom In/Out', keys: ['Cmd', '+/-'] },
       { label: 'Fit View', keys: ['Shift', '1'] },

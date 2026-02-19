@@ -13,6 +13,8 @@ interface ShortcutHandlers {
   onSearch: () => void;
   onShortcutsHelp: () => void;
   onAddNode: () => void;
+  onSelectMode: () => void;
+  onPanMode: () => void;
 }
 
 export const useKeyboardShortcuts = ({
@@ -28,6 +30,8 @@ export const useKeyboardShortcuts = ({
   onSearch,
   onShortcutsHelp,
   onAddNode,
+  onSelectMode,
+  onPanMode,
 }: ShortcutHandlers) => {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -67,6 +71,28 @@ export const useKeyboardShortcuts = ({
         if (!isEditable) {
           e.preventDefault();
           onAddNode();
+          return;
+        }
+      }
+
+      // Select Mode (V)
+      if (e.key === 'v' && !isCmdOrCtrl) {
+        const tag = (document.activeElement as HTMLElement)?.tagName;
+        const isEditable = tag === 'INPUT' || tag === 'TEXTAREA' || (document.activeElement as HTMLElement)?.isContentEditable;
+        if (!isEditable) {
+          e.preventDefault();
+          onSelectMode();
+          return;
+        }
+      }
+
+      // Pan Mode (H)
+      if (e.key === 'h' && !isCmdOrCtrl) {
+        const tag = (document.activeElement as HTMLElement)?.tagName;
+        const isEditable = tag === 'INPUT' || tag === 'TEXTAREA' || (document.activeElement as HTMLElement)?.isContentEditable;
+        if (!isEditable) {
+          e.preventDefault();
+          onPanMode();
           return;
         }
       }
@@ -121,5 +147,5 @@ export const useKeyboardShortcuts = ({
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [selectedNodeId, selectedEdgeId, deleteNode, deleteEdge, undo, redo, duplicateNode, selectAll, onCommandBar, onSearch, onShortcutsHelp, onAddNode]);
+  }, [selectedNodeId, selectedEdgeId, deleteNode, deleteEdge, undo, redo, duplicateNode, selectAll, onCommandBar, onSearch, onShortcutsHelp, onAddNode, onSelectMode, onPanMode]);
 };

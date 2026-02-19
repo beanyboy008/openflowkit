@@ -48,12 +48,14 @@ export const useAIGeneration = (
       const selectedNodes = simplifiedNodes.filter(n => nodes.find(orig => orig.id === n.id)?.selected);
 
       // 2. Call AI (now using unified service)
+      // Fall back to env var at runtime — Zustand persist can serialize apiKey as undefined
+      const apiKey = brandConfig.apiKey || import.meta.env.VITE_ANTHROPIC_API_KEY;
       const dslText = await generateDiagramFromChat(
         chatMessages,
         prompt,
         currentGraph,
         imageBase64,
-        brandConfig.apiKey,
+        apiKey,
         brandConfig.aiModel,
         brandConfig.aiProvider || 'gemini',
         brandConfig.customBaseUrl

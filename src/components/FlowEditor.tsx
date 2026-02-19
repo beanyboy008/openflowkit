@@ -27,7 +27,7 @@ import { useFlowExport } from '../hooks/useFlowExport';
 import { useToast } from './ui/ToastContext';
 import { usePlayback } from '../hooks/usePlayback';
 import { PlaybackControls } from './PlaybackControls';
-import { AIQuickInput } from './AIQuickInput';
+import { AIChatPanel } from './AIChatPanel';
 
 interface FlowEditorProps {
     onGoHome: () => void;
@@ -127,6 +127,8 @@ export function FlowEditor({ onGoHome }: FlowEditorProps) {
         onSearch: () => openCommandBar('search'),
         onShortcutsHelp: () => setShortcutsHelpOpen(true),
         onAddNode: () => handleAddNode(getCenter()),
+        onSelectMode: () => setIsSelectMode(true),
+        onPanMode: () => setIsSelectMode(false),
     });
 
     // --- AI ---
@@ -312,11 +314,13 @@ export function FlowEditor({ onGoHome }: FlowEditorProps) {
                 </div>
             )}
 
-            {/* AI Quick Input (Hidden during playback and command bar) */}
+            {/* AI Chat Panel (Hidden during playback and command bar) */}
             {currentStepIndex === -1 && !isCommandBarOpen && (
-                <AIQuickInput
+                <AIChatPanel
                     onSubmit={handleAIRequest}
                     isGenerating={isGenerating}
+                    chatMessages={chatMessages}
+                    onClearChat={clearChat}
                 />
             )}
 

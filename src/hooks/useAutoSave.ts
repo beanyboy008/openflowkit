@@ -30,12 +30,12 @@ export const useAutoSave = (
             try {
                 const data: AutoSaveData = JSON.parse(saved);
                 if (data.tabs && data.activeTabId) {
-
-
                     setTabs(data.tabs);
-                    setActiveTabId(data.activeTabId);
+                    // Don't call setActiveTabId here — let URL routing (FlowCanvasRoute)
+                    // determine which tab is active. This prevents overriding navigation
+                    // when the user clicks "New Flow" or opens a specific flow URL.
 
-                    const activeTab = data.tabs.find(t => t.id === data.activeTabId);
+                    const activeTab = data.tabs.find(t => t.id === activeTabId);
                     if (activeTab) {
                         setNodes(activeTab.nodes || []);
                         setEdges(activeTab.edges || []);
