@@ -50,22 +50,48 @@ const parseAttributes = (text: string): Record<string, any> => {
     const attributes: Record<string, any> = {};
     if (!text) return attributes;
 
-    // Simple parser for { key: "value", key2: 123 }
-    // Remove wrapping braces
     const content = text.trim();
     if (!content.startsWith('{') || !content.endsWith('}')) return attributes;
 
     const inner = content.slice(1, -1);
-    const pairs = inner.split(',').map(p => p.trim()).filter(Boolean);
+
+    // Split by commas that are NOT inside quoted strings
+    const pairs: string[] = [];
+    let current = '';
+    let inQuote = false;
+    let quoteChar = '';
+    for (let i = 0; i < inner.length; i++) {
+        const ch = inner[i];
+        if (!inQuote && (ch === '"' || ch === "'")) {
+            inQuote = true;
+            quoteChar = ch;
+            current += ch;
+        } else if (inQuote && ch === quoteChar && inner[i - 1] !== '\\') {
+            inQuote = false;
+            current += ch;
+        } else if (!inQuote && ch === ',') {
+            pairs.push(current.trim());
+            current = '';
+        } else {
+            current += ch;
+        }
+    }
+    if (current.trim()) pairs.push(current.trim());
 
     pairs.forEach(pair => {
-        const [key, rawValue] = pair.split(':').map(s => s.trim());
+        // Split on first colon only (values may contain colons)
+        const colonIdx = pair.indexOf(':');
+        if (colonIdx === -1) return;
+        const key = pair.slice(0, colonIdx).trim();
+        const rawValue = pair.slice(colonIdx + 1).trim();
         if (!key || !rawValue) return;
 
         let value: any = rawValue;
         // String
         if ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith("'") && value.endsWith("'"))) {
             value = value.slice(1, -1);
+            // Convert literal \n to actual newlines
+            value = value.replace(/\\n/g, '\n');
         }
         // Number
         else if (!isNaN(Number(value))) {
