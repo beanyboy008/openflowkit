@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { OpenFlowLogo } from './icons/OpenFlowLogo';
 import {
     Settings, Layout, Command, Search,
-    Home, Clock, Loader2, Plus, Import, Image, FileCode, FileJson, GitBranch, Book, ExternalLink, Trash2
+    Home, Clock, Loader2, Plus, Import, Image, FileCode, FileJson, GitBranch, Book, ExternalLink, Trash2,
+    Sparkles, ArrowUp, Workflow
 } from 'lucide-react';
 import { useFlowStore } from '../store';
 import { useSnapshots } from '../hooks/useSnapshots';
@@ -21,6 +22,8 @@ interface HomePageProps {
     onLaunch: () => void;
     onImportJSON: () => void;
     onRestoreSnapshot: (snapshot: FlowSnapshot) => void;
+    onOpenFlow: (tabId: string) => void;
+    onNewFlow: () => void;
     activeTab?: 'home' | 'settings';
     onSwitchTab?: (tab: 'home' | 'settings') => void;
 }
@@ -29,10 +32,12 @@ export const HomePage: React.FC<HomePageProps> = ({
     onLaunch,
     onImportJSON,
     onRestoreSnapshot,
+    onOpenFlow,
+    onNewFlow,
     activeTab: propActiveTab,
     onSwitchTab
 }) => {
-    const { brandConfig } = useFlowStore();
+    const { brandConfig, tabs } = useFlowStore();
     const { snapshots, deleteSnapshot } = useSnapshots();
     const [internalActiveTab, setInternalActiveTab] = useState<'home' | 'settings'>('home');
     const [activeSettingsTab, setActiveSettingsTab] = useState<'brand' | 'general' | 'shortcuts' | 'privacy'>('brand');
@@ -131,57 +136,79 @@ export const HomePage: React.FC<HomePageProps> = ({
                         {/* Header & Actions */}
                         <div className="flex items-end justify-between mb-12">
                             <div>
-                                <h1 className="text-2xl font-semibold text-slate-900 tracking-tight mb-1">Dashboard</h1>
-                                <p className="text-[var(--brand-secondary)] text-sm">Manage your flows and diagrams.</p>
+                                <h1 className="text-2xl font-semibold text-slate-900 tracking-tight mb-1">Your Flows</h1>
+                                <p className="text-[var(--brand-secondary)] text-sm">Open an existing flow or create a new one.</p>
                             </div>
                             <div className="flex items-center gap-3">
-
-
                                 <Button
-                                    onClick={() => { trackEvent('create_new_flow'); onLaunch(); }}
+                                    onClick={() => { trackEvent('import_json_flow'); onImportJSON(); }}
+                                    variant="secondary"
+                                    size="md"
+                                >
+                                    Import
+                                </Button>
+                                <Button
+                                    onClick={() => { trackEvent('create_new_flow'); onNewFlow(); }}
                                     variant="primary"
                                     size="md"
                                     icon={<Plus className="w-4 h-4" />}
                                 >
-                                    Create New
+                                    New Flow
                                 </Button>
                             </div>
                         </div>
 
-                        {/* Recent Files */}
-                        <section>
+                        {/* Saved Flows (Tabs) */}
+                        <section className="mb-12">
                             <div className="flex items-center justify-between mb-6">
-                                <h2 className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Recent Files</h2>
-                                {snapshots.length > 0 && (
-                                    <span className="text-xs text-slate-400">{snapshots.length} files</span>
-                                )}
+                                <h2 className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Flows</h2>
+                                <span className="text-xs text-slate-400">{tabs.length} {tabs.length === 1 ? 'flow' : 'flows'}</span>
                             </div>
 
-                            {snapshots.length === 0 ? (
-                                <div className="text-center py-20 border border-dashed border-slate-200 rounded-lg bg-slate-50/50">
-                                    <div className="w-10 h-10 bg-[var(--brand-surface)] rounded-full flex items-center justify-center mx-auto mb-3 shadow-sm border border-slate-100">
-                                        <Plus className="w-5 h-5 text-slate-400" />
+                            <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-4 gap-6">
+                                {/* New Flow Card */}
+                                <div
+                                    onClick={() => { trackEvent('create_new_flow'); onNewFlow(); }}
+                                    className="group bg-[var(--brand-surface)] rounded-lg border-2 border-dashed border-slate-200 overflow-hidden cursor-pointer hover:border-[var(--brand-primary)]/40 hover:shadow-sm transition-all relative flex flex-col items-center justify-center min-h-[200px]"
+                                >
+                                    <div className="w-12 h-12 rounded-full bg-[var(--brand-primary)]/5 flex items-center justify-center mb-3 group-hover:bg-[var(--brand-primary)]/10 transition-colors">
+                                        <Plus className="w-6 h-6 text-[var(--brand-primary)]" />
                                     </div>
-                                    <h3 className="text-slate-900 font-medium text-sm mb-1">Create your first flow</h3>
-                                    <p className="text-[var(--brand-secondary)] text-xs">Start from scratch or import an existing diagram.</p>
-                                    <div className="mt-6 flex items-center justify-center gap-3">
-                                        <Button
-                                            onClick={() => { trackEvent('import_json_flow'); onImportJSON(); }}
-                                            variant="secondary"
-                                            size="sm"
-                                        >
-                                            Open File
-                                        </Button>
-                                        <Button
-                                            onClick={() => { trackEvent('create_new_flow'); onLaunch(); }}
-                                            variant="primary"
-                                            size="sm"
-                                        >
-                                            Create New
-                                        </Button>
-                                    </div>
+                                    <span className="text-sm font-medium text-slate-600 group-hover:text-[var(--brand-primary)] transition-colors">New Flow</span>
                                 </div>
-                            ) : (
+
+                                {/* Existing Flow Cards */}
+                                {tabs.map(tab => (
+                                    <div
+                                        key={tab.id}
+                                        onClick={() => onOpenFlow(tab.id)}
+                                        className="group bg-[var(--brand-surface)] rounded-lg border border-slate-200 overflow-hidden cursor-pointer hover:border-slate-300 hover:shadow-sm transition-all relative"
+                                    >
+                                        <div className="h-32 bg-slate-50 flex items-center justify-center border-b border-slate-100 relative overflow-hidden">
+                                            <div className="w-10 h-10 rounded-lg bg-[var(--brand-surface)] shadow-sm border border-slate-100 flex items-center justify-center text-slate-300 group-hover:text-[var(--brand-primary)] group-hover:border-[var(--brand-primary-200)] transition-colors z-10">
+                                                <Workflow className="w-5 h-5" />
+                                            </div>
+                                        </div>
+                                        <div className="p-3">
+                                            <h3 className="font-medium text-slate-900 text-sm truncate mb-1 group-hover:text-[var(--brand-primary)] transition-colors">{tab.name}</h3>
+                                            <div className="flex items-center justify-between text-[11px] text-[var(--brand-secondary)]">
+                                                <span>{tab.nodes.length} {tab.nodes.length === 1 ? 'node' : 'nodes'}</span>
+                                                <span>{tab.edges.length} {tab.edges.length === 1 ? 'edge' : 'edges'}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </section>
+
+                        {/* Snapshots */}
+                        {snapshots.length > 0 && (
+                            <section>
+                                <div className="flex items-center justify-between mb-6">
+                                    <h2 className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Saved Snapshots</h2>
+                                    <span className="text-xs text-slate-400">{snapshots.length} snapshots</span>
+                                </div>
+
                                 <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-4 gap-6">
                                     {snapshots.map(snapshot => (
                                         <div
@@ -189,15 +216,9 @@ export const HomePage: React.FC<HomePageProps> = ({
                                             onClick={() => handleRestore(snapshot)}
                                             className="group bg-[var(--brand-surface)] rounded-lg border border-slate-200 overflow-hidden cursor-pointer hover:border-slate-300 hover:shadow-sm transition-all relative"
                                         >
-                                            <div className="h-40 bg-slate-50 flex items-center justify-center border-b border-slate-100 relative overflow-hidden">
-                                                {/* Minimalist Preview Placeholder */}
-                                                <div className="absolute inset-0 flex items-center justify-center opacity-[0.03] group-hover:opacity-[0.06] transition-opacity">
-                                                    <code className="text-[8px] leading-relaxed select-none">
-                                                        {`graph TD\n  A[Start] --> B{Decision}\n  B -->|Yes| C[End]\n  B -->|No| D[Loop]`}
-                                                    </code>
-                                                </div>
+                                            <div className="h-32 bg-slate-50 flex items-center justify-center border-b border-slate-100 relative overflow-hidden">
                                                 <div className="w-8 h-8 rounded bg-[var(--brand-surface)] shadow-sm border border-slate-100 flex items-center justify-center text-slate-300 group-hover:text-[var(--brand-primary)] group-hover:border-[var(--brand-primary-200)] transition-colors z-10">
-                                                    <Layout className="w-4 h-4" />
+                                                    <Clock className="w-4 h-4" />
                                                 </div>
 
                                                 <Button
@@ -220,8 +241,8 @@ export const HomePage: React.FC<HomePageProps> = ({
                                         </div>
                                     ))}
                                 </div>
-                            )}
-                        </section>
+                            </section>
+                        )}
                     </div>
                 )}
 

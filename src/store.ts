@@ -105,9 +105,9 @@ export const DEFAULT_BRAND_CONFIG: BrandConfig = {
     appName: 'OpenFlowKit',
     logoUrl: null,
     faviconUrl: '/favicon.svg',
-    apiKey: undefined,
-    aiModel: undefined,
-    aiProvider: 'gemini',
+    apiKey: import.meta.env.VITE_ANTHROPIC_API_KEY || undefined,
+    aiModel: 'claude-sonnet-4-6',
+    aiProvider: 'claude',
     customBaseUrl: undefined,
     logoStyle: 'both',
     colors: {

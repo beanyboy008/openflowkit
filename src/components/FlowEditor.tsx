@@ -27,6 +27,7 @@ import { useFlowExport } from '../hooks/useFlowExport';
 import { useToast } from './ui/ToastContext';
 import { usePlayback } from '../hooks/usePlayback';
 import { PlaybackControls } from './PlaybackControls';
+import { AIQuickInput } from './AIQuickInput';
 
 interface FlowEditorProps {
     onGoHome: () => void;
@@ -124,7 +125,8 @@ export function FlowEditor({ onGoHome }: FlowEditorProps) {
         deleteNode, deleteEdge, undo, redo, duplicateNode, selectAll,
         onCommandBar: () => openCommandBar('root'),
         onSearch: () => openCommandBar('search'),
-        onShortcutsHelp: () => setShortcutsHelpOpen(true)
+        onShortcutsHelp: () => setShortcutsHelpOpen(true),
+        onAddNode: () => handleAddNode(getCenter()),
     });
 
     // --- AI ---
@@ -308,6 +310,14 @@ export function FlowEditor({ onGoHome }: FlowEditorProps) {
                         <span className="text-sm font-medium text-slate-600">Applying layout…</span>
                     </div>
                 </div>
+            )}
+
+            {/* AI Quick Input (Hidden during playback and command bar) */}
+            {currentStepIndex === -1 && !isCommandBarOpen && (
+                <AIQuickInput
+                    onSubmit={handleAIRequest}
+                    isGenerating={isGenerating}
+                />
             )}
 
             {/* Toolbar (Hidden during playback) */}

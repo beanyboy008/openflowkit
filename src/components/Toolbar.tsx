@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import {
   Undo2, Redo2, MousePointer2, Hand, Wand2, Plus,
   Square, StickyNote, Group, Type, Layout, Workflow,
-  Trash2, Image as ImageIcon, Palette, Sparkles, X
+  Trash2, Image as ImageIcon, Palette, Sparkles, X, ChevronUp
 } from 'lucide-react';
 import { Button } from './ui/Button';
 import { Tooltip } from './Tooltip';
@@ -154,15 +154,25 @@ export const Toolbar: React.FC<ToolbarProps> = ({
           />
         </Tooltip>
 
-        <div className="relative" ref={addMenuRef}>
-          <Tooltip text="Add Item">
+        <div className="relative flex items-center" ref={addMenuRef}>
+          <Tooltip text="Add Node (N)">
+            <Button
+              onClick={() => { onAddNode(getCenter()); }}
+              disabled={!isInteractive}
+              variant="primary"
+              size="icon"
+              className="h-10 w-10 shadow-lg shadow-[var(--brand-primary)]/20 transition-all hover:scale-105 active:scale-95 bg-[var(--brand-primary)] hover:brightness-110 rounded-r-none"
+              icon={<Plus className="w-5 h-5 text-white" />}
+            />
+          </Tooltip>
+          <Tooltip text="More node types">
             <Button
               onClick={() => setShowAddMenu(!showAddMenu)}
               disabled={!isInteractive}
               variant="primary"
               size="icon"
-              className={`h-10 w-10 shadow-lg shadow-[var(--brand-primary)]/20 transition-all hover:scale-105 active:scale-95 ${showAddMenu ? 'rotate-45 bg-slate-800 hover:bg-slate-900' : 'bg-[var(--brand-primary)] hover:brightness-110'}`}
-              icon={<Plus className="w-5 h-5 text-white" />}
+              className={`h-10 w-6 shadow-lg shadow-[var(--brand-primary)]/20 transition-all rounded-l-none border-l border-white/20 ${showAddMenu ? 'bg-slate-800 hover:bg-slate-900' : 'bg-[var(--brand-primary)] hover:brightness-110'}`}
+              icon={<ChevronUp className="w-3 h-3 text-white" />}
             />
           </Tooltip>
 

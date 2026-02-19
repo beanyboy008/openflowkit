@@ -12,6 +12,7 @@ interface ShortcutHandlers {
   onCommandBar: () => void;
   onSearch: () => void;
   onShortcutsHelp: () => void;
+  onAddNode: () => void;
 }
 
 export const useKeyboardShortcuts = ({
@@ -26,6 +27,7 @@ export const useKeyboardShortcuts = ({
   onCommandBar,
   onSearch,
   onShortcutsHelp,
+  onAddNode,
 }: ShortcutHandlers) => {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -55,6 +57,17 @@ export const useKeyboardShortcuts = ({
         if (!isEditable) {
           e.preventDefault();
           onShortcutsHelp();
+        }
+      }
+
+      // Add Node (N)
+      if (e.key === 'n' && !isCmdOrCtrl) {
+        const tag = (document.activeElement as HTMLElement)?.tagName;
+        const isEditable = tag === 'INPUT' || tag === 'TEXTAREA' || (document.activeElement as HTMLElement)?.isContentEditable;
+        if (!isEditable) {
+          e.preventDefault();
+          onAddNode();
+          return;
         }
       }
 
@@ -108,5 +121,5 @@ export const useKeyboardShortcuts = ({
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [selectedNodeId, selectedEdgeId, deleteNode, deleteEdge, undo, redo, duplicateNode, selectAll, onCommandBar, onSearch, onShortcutsHelp]);
+  }, [selectedNodeId, selectedEdgeId, deleteNode, deleteEdge, undo, redo, duplicateNode, selectAll, onCommandBar, onSearch, onShortcutsHelp, onAddNode]);
 };

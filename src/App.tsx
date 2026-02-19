@@ -55,12 +55,20 @@ function HomePageRoute(): React.JSX.Element {
 
   const handleRestore = (snapshot: any) => {
     const { setNodes, setEdges } = useFlowStore.getState();
-    // Deep copy to prevent state mutation issues if snapshot is just a ref
     const nodesCopy = JSON.parse(JSON.stringify(snapshot.nodes));
     const edgesCopy = JSON.parse(JSON.stringify(snapshot.edges));
     setNodes(nodesCopy);
     setEdges(edgesCopy);
     navigate('/canvas');
+  };
+
+  const handleOpenFlow = (tabId: string) => {
+    navigate(`/flow/${tabId}`);
+  };
+
+  const handleNewFlow = () => {
+    const newId = useFlowStore.getState().addTab();
+    navigate(`/flow/${newId}`);
   };
 
   return (
@@ -73,8 +81,10 @@ function HomePageRoute(): React.JSX.Element {
         }, 100);
       }}
       onRestoreSnapshot={handleRestore}
+      onOpenFlow={handleOpenFlow}
+      onNewFlow={handleNewFlow}
       activeTab={activeTab}
-      onSwitchTab={(tab) => navigate(tab === 'settings' ? '/settings' : '/home')}
+      onSwitchTab={(tab) => navigate(tab === 'settings' ? '/settings' : '/')}
     />
   );
 }
@@ -152,7 +162,7 @@ function App(): React.JSX.Element {
     <Router>
       <ReactFlowProvider>
         <Routes>
-          <Route path="/" element={<MobileGate><FlowCanvasRoute /></MobileGate>} />
+          <Route path="/" element={<MobileGate><HomePageRoute /></MobileGate>} />
           <Route path="/home" element={<MobileGate><HomePageRoute /></MobileGate>} />
           <Route path="/settings" element={<MobileGate><HomePageRoute /></MobileGate>} />
           <Route path="/canvas" element={<MobileGate><FlowCanvasRoute /></MobileGate>} />

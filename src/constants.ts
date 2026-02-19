@@ -150,6 +150,30 @@ export const INITIAL_NODES: Node[] = [
     },
   },
 
+  // ========== MANYCHAT + QUIZ (under Personal Brand) ==========
+  {
+    id: 'rn-manychat',
+    type: NodeType.PROCESS,
+    position: { x: -50, y: 300 },
+    data: {
+      label: 'ManyChat',
+      subLabel: 'Captures engagement from content\nDMs, comments, keyword triggers',
+      icon: 'MessageCircle',
+      color: 'pink',
+    },
+  },
+  {
+    id: 'rn-quiz',
+    type: NodeType.PROCESS,
+    position: { x: -50, y: 480 },
+    data: {
+      label: 'ManyChat Quiz',
+      subLabel: 'Qualifies leads before opt-in',
+      icon: 'ClipboardList',
+      color: 'amber',
+    },
+  },
+
   // ========== FUNNEL (center column) ==========
   {
     id: 'rn-optin',
@@ -316,8 +340,12 @@ export const INITIAL_EDGES: Edge[] = [
   createDefaultEdge('rn-paid', 'rn-image', undefined, 'e-paid-image'),
   createDefaultEdge('rn-paid', 'rn-character', undefined, 'e-paid-character'),
 
-  // Traffic Sources → Opt-In
-  createDefaultEdge('rn-brand', 'rn-optin', undefined, 'e-brand-optin'),
+  // Personal Brand → ManyChat → Quiz → Opt-In
+  createDefaultEdge('rn-brand', 'rn-manychat', undefined, 'e-brand-manychat'),
+  createDefaultEdge('rn-manychat', 'rn-quiz', undefined, 'e-manychat-quiz'),
+  createDefaultEdge('rn-quiz', 'rn-optin', undefined, 'e-quiz-optin'),
+
+  // Paid Ads → Opt-In
   createDefaultEdge('rn-paid', 'rn-optin', undefined, 'e-paid-optin'),
 
   // Main Funnel
