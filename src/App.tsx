@@ -2,17 +2,20 @@ import React, { useEffect } from 'react';
 import { HashRouter as Router, Routes, Route, useNavigate, useParams, useLocation } from 'react-router-dom';
 import 'reactflow/dist/style.css';
 import { ReactFlowProvider } from 'reactflow';
-import { Monitor, ArrowLeft } from 'lucide-react';
+import { Monitor, ArrowLeft, Loader2 } from 'lucide-react';
 import { OpenFlowLogo } from './components/icons/OpenFlowLogo';
 
 import { useFlowStore } from './store';
 import { useBrandTheme } from './hooks/useBrandTheme';
+import { useAuth } from './hooks/useAuth';
+import { useAutoSave } from './hooks/useAutoSave';
 
 import { FlowEditor } from './components/FlowEditor';
 import { HomePage } from './components/HomePage';
 import { LandingPage } from './components/LandingPage';
 import { DocsLayout } from './components/docs/DocsLayout';
 import { DocsPage } from './components/docs/DocsPage';
+import { AuthPage } from './components/AuthPage';
 
 import { KeyboardShortcutsModal } from './components/KeyboardShortcutsModal';
 import { initAnalytics } from './lib/analytics';
@@ -130,13 +133,14 @@ function MobileGate({ children }: { children: React.ReactNode }): React.JSX.Elem
   );
 }
 
-function App(): React.JSX.Element {
+function AuthenticatedApp(): React.JSX.Element {
   const { setShortcutsHelpOpen } = useFlowStore();
+  const dataLoaded = useFlowStore((s) => s.dataLoaded);
   useBrandTheme();
+  useAutoSave();
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Don't trigger if user is typing in an input
       const activeElement = document.activeElement as HTMLElement | null;
       const isInput = activeElement instanceof HTMLInputElement ||
         activeElement instanceof HTMLTextAreaElement ||
@@ -158,6 +162,14 @@ function App(): React.JSX.Element {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [setShortcutsHelpOpen]);
 
+  if (!dataLoaded) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-slate-400" />
+      </div>
+    );
+  }
+
   return (
     <Router>
       <ReactFlowProvider>
@@ -176,6 +188,24 @@ function App(): React.JSX.Element {
       </ReactFlowProvider>
     </Router>
   );
+}
+
+function App(): React.JSX.Element {
+  const { user, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-slate-400" />
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <AuthPage />;
+  }
+
+  return <AuthenticatedApp />;
 }
 
 export default App;

@@ -17,6 +17,7 @@
   },
   "dependencies": {
     "@google/genai": "^1.40.0",
+    "@supabase/supabase-js": "^2.97.0",
     "@types/react-syntax-highlighter": "^15.5.13",
     "@types/tinycolor2": "^1.4.6",
     "dagre": "0.8.5",

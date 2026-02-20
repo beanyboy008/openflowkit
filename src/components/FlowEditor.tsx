@@ -18,7 +18,7 @@ import { toMermaid, toPlantUML } from '../services/exportService';
 import { toFigmaSVG } from '../services/figmaExportService';
 import { toOpenFlowDSL } from '../services/openFlowDSLExporter';
 import { useSnapshots } from '../hooks/useSnapshots';
-import { useAutoSave } from '../hooks/useAutoSave';
+// useAutoSave is now called at the App level (useSupabaseSync)
 import { useFlowHistory } from '../hooks/useFlowHistory';
 import { useFlowOperations } from '../hooks/useFlowOperations';
 import { useKeyboardShortcuts } from '../hooks/useKeyboardShortcuts';
@@ -85,14 +85,6 @@ export function FlowEditor({ onGoHome }: FlowEditorProps) {
 
     // --- History ---
     const { recordHistory, undo, redo, canUndo, canRedo, setPast, setFuture } = useFlowHistory();
-
-    // --- Auto Save ---
-    useAutoSave(
-        tabs, activeTabId, nodes, edges,
-        setTabs, setActiveTabId,
-        setNodes, setEdges,
-        setPast, setFuture
-    );
 
     // --- Tab Management ---
     const handleSwitchTab = useCallback((newTabId: string) => {

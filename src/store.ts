@@ -228,12 +228,13 @@ interface FlowState {
 
     // Bulk Node Actions
     updateSelectedNodes: (data: Partial<import('./lib/types').NodeData>) => void;
+
+    // Data Loading State
+    dataLoaded: boolean;
+    setDataLoaded: (loaded: boolean) => void;
 }
 
-import { persist } from 'zustand/middleware'; // Import persist
-
 export const useFlowStore = create<FlowState>()(
-    persist(
         (set, get) => ({
             // Initial State
             nodes: INITIAL_NODES,
@@ -278,6 +279,9 @@ export const useFlowStore = create<FlowState>()(
 
             activeGuides: [],
             setActiveGuides: (guides) => set({ activeGuides: guides }),
+
+            dataLoaded: false,
+            setDataLoaded: (loaded) => set({ dataLoaded: loaded }),
 
             // React Flow Actions
             onNodesChange: (changes: NodeChange[]) => {
@@ -351,7 +355,7 @@ export const useFlowStore = create<FlowState>()(
                     t.id === activeTabId ? { ...t, nodes: get().nodes, edges: get().edges } : t
                 );
 
-                const newTabId = `tab-${Date.now()}`;
+                const newTabId = crypto.randomUUID();
                 const newTab: FlowTab = {
                     id: newTabId,
                     name: 'New Flow',
@@ -609,21 +613,5 @@ export const useFlowStore = create<FlowState>()(
                     n.selected ? { ...n, data: { ...n.data, ...data } } : n
                 ),
             })),
-        }),
-        {
-            name: 'openflowkit-storage', // unique name
-            partialize: (state) => ({
-                // Only persist these fields
-                tabs: state.tabs,
-                activeTabId: state.activeTabId,
-                designSystems: state.designSystems,
-                activeDesignSystemId: state.activeDesignSystemId,
-                viewSettings: state.viewSettings,
-                globalEdgeOptions: state.globalEdgeOptions,
-                brandConfig: state.brandConfig,
-                brandKits: state.brandKits,
-                activeBrandKitId: state.activeBrandKitId,
-            }),
-        }
-    )
+        })
 );
