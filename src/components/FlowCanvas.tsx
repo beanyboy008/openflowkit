@@ -289,7 +289,7 @@ export const FlowCanvas: React.FC<FlowCanvasProps> = ({
                 defaultEdgeOptions={{
                     style: { stroke: '#94a3b8', strokeWidth: 2 },
                     animated: false,
-                    markerEnd: { type: MarkerType.ArrowClosed, color: '#94a3b8' },
+                    markerEnd: { type: MarkerType.ArrowClosed, color: '#94a3b8', width: 20, height: 20 },
                 }}
                 connectionLineComponent={CustomConnectionLine}
                 snapToGrid={snapToGrid}

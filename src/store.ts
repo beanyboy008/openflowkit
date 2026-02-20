@@ -261,7 +261,7 @@ export const useFlowStore = create<FlowState>()(
             },
 
             globalEdgeOptions: {
-                type: 'straight',
+                type: 'smoothstep',
                 animated: false,
                 strokeWidth: 2,
             },

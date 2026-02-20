@@ -311,6 +311,7 @@ const CustomNode = ({ id, data, type, selected }: NodeProps<NodeData>) => {
                   fontWeight: data.fontWeight || 'bold',
                   fontStyle: data.fontStyle || 'normal',
                 }}
+                onMouseDown={(e) => e.stopPropagation()}
                 onClick={(e) => { e.stopPropagation(); setEditingLabel(true); }}
               >
                 {data.label ? (
@@ -353,6 +354,7 @@ const CustomNode = ({ id, data, type, selected }: NodeProps<NodeData>) => {
                   textAlign: data.align || 'center',
                   opacity: 0.85
                 }}
+                onMouseDown={(e) => e.stopPropagation()}
                 onClick={(e) => { e.stopPropagation(); setEditingSubLabel(true); }}
               >
                 <MemoizedMarkdown content={data.subLabel} />
@@ -360,6 +362,7 @@ const CustomNode = ({ id, data, type, selected }: NodeProps<NodeData>) => {
             ) : (
               <div
                 className="text-xs text-slate-400 mt-1 cursor-text italic"
+                onMouseDown={(e) => e.stopPropagation()}
                 onClick={(e) => { e.stopPropagation(); setSubLabelDraft(''); setEditingSubLabel(true); }}
               >
                 Click to add details
