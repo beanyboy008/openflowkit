@@ -91,19 +91,6 @@ export const INITIAL_NODES: Node[] = [
     },
   },
 
-  // ========== TRAFFIC: PAID ADS (right column) ==========
-  {
-    id: 'rn-paid',
-    type: NodeType.PROCESS,
-    position: { x: 650, y: 80 },
-    data: {
-      label: 'Paid Ads',
-      subLabel: 'Facebook (primary) + YouTube (secondary)\nUGC, image, brand character ads\nTest 12/month each\nDisqualify in ad copy\nWarm up FB with non-selling videos',
-      icon: 'Megaphone',
-      color: 'blue',
-    },
-  },
-
   // ========== VIDEOS (under Personal Brand) ==========
   {
     id: 'rn-videos',
@@ -117,11 +104,138 @@ export const INITIAL_NODES: Node[] = [
     },
   },
 
-  // ========== MANYCHAT (under Videos) ==========
+  // --- Video Breakdown ---
+  {
+    id: 'rn-shorts',
+    type: NodeType.PROCESS,
+    position: { x: -160, y: 560 },
+    data: {
+      label: '21 Shorts/Month',
+      subLabel: 'Short form content\nReels, TikToks, Shorts',
+      icon: 'Smartphone',
+      color: 'emerald',
+    },
+  },
+  {
+    id: 'rn-longform',
+    type: NodeType.PROCESS,
+    position: { x: 160, y: 560 },
+    data: {
+      label: '9 Longform/Month',
+      subLabel: 'YouTube, podcasts\nDeep-dive content',
+      icon: 'MonitorPlay',
+      color: 'emerald',
+    },
+  },
+
+  // --- Social Platforms ---
+  {
+    id: 'rn-linkedin',
+    type: NodeType.PROCESS,
+    position: { x: -320, y: 800 },
+    data: {
+      label: 'LinkedIn',
+      subLabel: 'Professional network\nB2B reach',
+      icon: 'Linkedin',
+      color: 'blue',
+    },
+  },
+  {
+    id: 'rn-tiktok',
+    type: NodeType.PROCESS,
+    position: { x: -160, y: 800 },
+    data: {
+      label: 'TikTok',
+      subLabel: 'Short form discovery\nOrganic reach',
+      icon: 'Music',
+      color: 'pink',
+    },
+  },
+  {
+    id: 'rn-youtube',
+    type: NodeType.PROCESS,
+    position: { x: 0, y: 800 },
+    data: {
+      label: 'YouTube',
+      subLabel: 'Long form + Shorts\nSearch & subscribe',
+      icon: 'Youtube',
+      color: 'red',
+    },
+  },
+  {
+    id: 'rn-facebook',
+    type: NodeType.PROCESS,
+    position: { x: 160, y: 800 },
+    data: {
+      label: 'Facebook',
+      subLabel: 'Groups + Reels\nWarm up for ads',
+      icon: 'Facebook',
+      color: 'blue',
+    },
+  },
+  {
+    id: 'rn-instagram',
+    type: NodeType.PROCESS,
+    position: { x: 320, y: 800 },
+    data: {
+      label: 'Instagram',
+      subLabel: 'Reels + Stories\nDM engagement',
+      icon: 'Instagram',
+      color: 'violet',
+    },
+  },
+
+  // ========== TRAFFIC: PAID ADS (right column) ==========
+  {
+    id: 'rn-paid',
+    type: NodeType.PROCESS,
+    position: { x: 700, y: 80 },
+    data: {
+      label: 'Paid Ads',
+      subLabel: 'Facebook (primary) + YouTube (secondary)\nUGC, image, brand character ads\nDisqualify in ad copy\nWarm up FB with non-selling videos',
+      icon: 'Megaphone',
+      color: 'blue',
+    },
+  },
+  {
+    id: 'rn-fbads',
+    type: NodeType.PROCESS,
+    position: { x: 700, y: 320 },
+    data: {
+      label: 'FB Ads',
+      subLabel: 'Primary paid channel\nTest 12 creatives/month\nUGC + image + brand character',
+      icon: 'Target',
+      color: 'blue',
+    },
+  },
+  {
+    id: 'rn-test12',
+    type: NodeType.PROCESS,
+    position: { x: 700, y: 560 },
+    data: {
+      label: 'Test 12/Month',
+      subLabel: 'Test 12 ad creatives per month\nKill losers, scale winners\nWinning hooks → organic',
+      icon: 'FlaskConical',
+      color: 'violet',
+    },
+  },
+
+  // --- Qualify in ads annotation ---
+  {
+    id: 'rn-adqualify-note',
+    type: NodeType.ANNOTATION,
+    position: { x: 950, y: 320 },
+    data: {
+      label: 'Qualify in Ads',
+      subLabel: 'Disqualify non-serious in ad copy\nSave $ on unqualified clicks',
+    },
+  },
+
+  // ========== MANYCHAT (convergence point) ==========
   {
     id: 'rn-manychat',
     type: NodeType.PROCESS,
-    position: { x: 0, y: 560 },
+    position: { x: 0, y: 1040 },
     data: {
       label: 'ManyChat',
       subLabel: 'Captures engagement from content\nDMs, comments, keyword triggers',
@@ -130,15 +244,15 @@ export const INITIAL_NODES: Node[] = [
     },
   },
 
-  // ========== DISQUALIFICATION QUIZ ==========
+  // ========== QUALIFY IN DMs (decision) ==========
   {
-    id: 'rn-quiz',
+    id: 'rn-qualify-dms',
     type: NodeType.DECISION,
-    position: { x: 0, y: 800 },
+    position: { x: 0, y: 1280 },
     data: {
-      label: 'Disqualification Quiz',
-      subLabel: 'Qualifies leads before opt-in\nFilters out non-serious prospects',
-      icon: 'ClipboardList',
+      label: 'Qualify in DMs',
+      subLabel: 'Ask qualifying questions\nFilter non-serious prospects\nBefore sending to opt-in',
+      icon: 'MessageSquare',
       color: 'amber',
     },
   },
@@ -147,7 +261,7 @@ export const INITIAL_NODES: Node[] = [
   {
     id: 'rn-optin',
     type: NodeType.PROCESS,
-    position: { x: 300, y: 1040 },
+    position: { x: 350, y: 1520 },
     data: {
       label: 'Opt-In Page',
       subLabel: 'PropertyConsulting.io\nPop-up: name, email, phone',
@@ -158,7 +272,7 @@ export const INITIAL_NODES: Node[] = [
   {
     id: 'rn-vsl',
     type: NodeType.PROCESS,
-    position: { x: 300, y: 1280 },
+    position: { x: 350, y: 1760 },
     data: {
       label: 'VSL',
       subLabel: 'Reshoot video + add metrics',
@@ -169,7 +283,7 @@ export const INITIAL_NODES: Node[] = [
   {
     id: 'rn-qualify',
     type: NodeType.DECISION,
-    position: { x: 300, y: 1520 },
+    position: { x: 350, y: 2000 },
     data: {
       label: 'Qualification Pop-Up',
       subLabel: 'Fillout form\nHow many rental properties?\nLiquid capital: 25K–150K+\nQualified = 50K+',
@@ -182,7 +296,7 @@ export const INITIAL_NODES: Node[] = [
   {
     id: 'rn-pixel',
     type: NodeType.PROCESS,
-    position: { x: 650, y: 1520 },
+    position: { x: 700, y: 2000 },
     data: {
       label: 'FB Pixel Fires',
       subLabel: 'Fillout → Zapier → FB CAPI\nConversion event sent',
@@ -195,7 +309,7 @@ export const INITIAL_NODES: Node[] = [
   {
     id: 'rn-book',
     type: NodeType.PROCESS,
-    position: { x: 300, y: 1760 },
+    position: { x: 350, y: 2240 },
     data: {
       label: 'Book a Call',
       subLabel: 'Fillout calendar\nBoth qualified & non-qualified book',
@@ -208,7 +322,7 @@ export const INITIAL_NODES: Node[] = [
   {
     id: 'rn-booknote',
     type: NodeType.ANNOTATION,
-    position: { x: 650, y: 1760 },
+    position: { x: 700, y: 2240 },
     data: {
       label: 'Future: Double Bookings',
       subLabel: 'Later: double-book or use another closer for non-qualified calls',
@@ -219,7 +333,7 @@ export const INITIAL_NODES: Node[] = [
   {
     id: 'rn-nurture30',
     type: NodeType.PROCESS,
-    position: { x: 0, y: 2000 },
+    position: { x: 0, y: 2480 },
     data: {
       label: '30-Day Email & SMS Nurture',
       subLabel: 'Drop-offs / no-shows\nDrives prospects back to book a call',
@@ -230,7 +344,7 @@ export const INITIAL_NODES: Node[] = [
   {
     id: 'rn-postbookpage',
     type: NodeType.PROCESS,
-    position: { x: 300, y: 2000 },
+    position: { x: 350, y: 2480 },
     data: {
       label: 'Post-Book Qualification Page',
       subLabel: 'Qualification VSL\nGets them warmed up for the call',
@@ -242,7 +356,7 @@ export const INITIAL_NODES: Node[] = [
   {
     id: 'rn-hammer',
     type: NodeType.PROCESS,
-    position: { x: 0, y: 2240 },
+    position: { x: 0, y: 2720 },
     data: {
       label: '"Hammer Them" Retargeting',
       subLabel: 'Jeremy Haynes strategy\nRetargeting ads between book → call\nIndoctrination videos\nIncludes personal brand winners',
@@ -253,7 +367,7 @@ export const INITIAL_NODES: Node[] = [
   {
     id: 'rn-call',
     type: NodeType.PROCESS,
-    position: { x: 300, y: 2240 },
+    position: { x: 350, y: 2720 },
     data: {
       label: 'Sales Call',
       subLabel: '85% show-up rate target\nDouble book to achieve',
@@ -265,7 +379,7 @@ export const INITIAL_NODES: Node[] = [
   {
     id: 'rn-postbookems',
     type: NodeType.PROCESS,
-    position: { x: 0, y: 2480 },
+    position: { x: 0, y: 2960 },
     data: {
       label: 'Post-Booking Email & SMS',
       subLabel: 'Gets them to show up',
@@ -276,7 +390,7 @@ export const INITIAL_NODES: Node[] = [
   {
     id: 'rn-close',
     type: NodeType.END,
-    position: { x: 300, y: 2480 },
+    position: { x: 350, y: 2960 },
     data: {
       label: 'Close',
       subLabel: '50% close rate target\nPayment plans set up\nFrame: pay nothing up front, earn from properties',
@@ -289,7 +403,7 @@ export const INITIAL_NODES: Node[] = [
   {
     id: 'rn-future',
     type: NodeType.CUSTOM,
-    position: { x: 300, y: 2720 },
+    position: { x: 350, y: 3200 },
     data: {
       label: 'Backend — FUTURE',
       subLabel: 'Ascension upsells\nCross-sells\nRevenue retention\nAfter front end works',
@@ -300,14 +414,39 @@ export const INITIAL_NODES: Node[] = [
 ];
 
 export const INITIAL_EDGES: Edge[] = [
-  // Personal Brand → Videos → ManyChat → Disqualification Quiz → Opt-In
+  // Personal Brand → Videos
   createDefaultEdge('rn-brand', 'rn-videos', undefined, 'e-brand-videos'),
-  createDefaultEdge('rn-videos', 'rn-manychat', undefined, 'e-videos-manychat'),
-  createDefaultEdge('rn-manychat', 'rn-quiz', undefined, 'e-manychat-quiz'),
-  createDefaultEdge('rn-quiz', 'rn-optin', undefined, 'e-quiz-optin'),
 
-  // Paid Ads → Opt-In
-  createDefaultEdge('rn-paid', 'rn-optin', undefined, 'e-paid-optin'),
+  // Videos → Shorts + Longform
+  createDefaultEdge('rn-videos', 'rn-shorts', '70%', 'e-videos-shorts'),
+  createDefaultEdge('rn-videos', 'rn-longform', '30%', 'e-videos-longform'),
+
+  // Shorts → Social Platforms
+  createDefaultEdge('rn-shorts', 'rn-linkedin', undefined, 'e-shorts-linkedin'),
+  createDefaultEdge('rn-shorts', 'rn-tiktok', undefined, 'e-shorts-tiktok'),
+  createDefaultEdge('rn-shorts', 'rn-instagram', undefined, 'e-shorts-instagram'),
+
+  // Longform → YouTube + Facebook
+  createDefaultEdge('rn-longform', 'rn-youtube', undefined, 'e-longform-youtube'),
+  createDefaultEdge('rn-longform', 'rn-facebook', undefined, 'e-longform-facebook'),
+
+  // Social Platforms → ManyChat
+  createDefaultEdge('rn-linkedin', 'rn-manychat', undefined, 'e-linkedin-manychat'),
+  createDefaultEdge('rn-tiktok', 'rn-manychat', undefined, 'e-tiktok-manychat'),
+  createDefaultEdge('rn-youtube', 'rn-manychat', undefined, 'e-youtube-manychat'),
+  createDefaultEdge('rn-facebook', 'rn-manychat', undefined, 'e-facebook-manychat'),
+  createDefaultEdge('rn-instagram', 'rn-manychat', undefined, 'e-instagram-manychat'),
+
+  // ManyChat → Qualify in DMs
+  createDefaultEdge('rn-manychat', 'rn-qualify-dms', undefined, 'e-manychat-qualifydms'),
+
+  // Qualify in DMs → Yes (Opt-In) / No (drop)
+  createDefaultEdge('rn-qualify-dms', 'rn-optin', 'Yes', 'e-qualifydms-optin'),
+
+  // Paid Ads → FB Ads → Test 12 → Opt-In
+  createDefaultEdge('rn-paid', 'rn-fbads', undefined, 'e-paid-fbads'),
+  createDefaultEdge('rn-fbads', 'rn-test12', undefined, 'e-fbads-test12'),
+  createDefaultEdge('rn-test12', 'rn-optin', undefined, 'e-test12-optin'),
 
   // Main Funnel
   createDefaultEdge('rn-optin', 'rn-vsl', undefined, 'e-optin-vsl'),
