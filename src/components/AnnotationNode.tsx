@@ -49,7 +49,7 @@ const AnnotationNode = ({ id, data, selected }: NodeProps<NodeData>) => {
       <NodeResizer
         color="#ca8a04"
         isVisible={selected}
-        minWidth={150}
+        minWidth={200}
         minHeight={100}
       />
       <div

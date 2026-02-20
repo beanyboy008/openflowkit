@@ -1,6 +1,7 @@
 import React, { memo, useMemo, useState, useCallback, useRef, useEffect } from 'react';
 import { Handle, Position, NodeProps, NodeResizer } from 'reactflow';
 import { NodeData } from '@/lib/types';
+import { ExternalLink, Check } from 'lucide-react';
 
 import { ICON_MAP } from './IconMap';
 import MemoizedMarkdown from './MemoizedMarkdown';
@@ -51,6 +52,19 @@ const CustomNode = ({ id, data, type, selected }: NodeProps<NodeData>) => {
   const stopPropagation = useCallback((e: React.KeyboardEvent | React.MouseEvent) => {
     e.stopPropagation();
   }, []);
+
+  const toggleChecked = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+    setNodes((nodes) => nodes.map((n) =>
+      n.id === id ? { ...n, data: { ...n.data, checked: !n.data.checked } } : n
+    ));
+  }, [id, setNodes]);
+
+  const handleLinkClick = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    if (data.link) window.open(data.link, '_blank', 'noopener,noreferrer');
+  }, [data.link]);
 
   const handleLabelKeyDown = useCallback((e: React.KeyboardEvent) => {
     e.stopPropagation();
@@ -201,8 +215,8 @@ const CustomNode = ({ id, data, type, selected }: NodeProps<NodeData>) => {
       <NodeResizer
         color="#94a3b8"
         isVisible={selected}
-        minWidth={100}
-        minHeight={50}
+        minWidth={isCircular ? 150 : 200}
+        minHeight={isCircular ? 150 : 80}
         lineStyle={{ borderStyle: 'solid', borderWidth: 1 }}
         handleStyle={{ width: 8, height: 8, borderRadius: 4 }}
       />
@@ -256,6 +270,21 @@ const CustomNode = ({ id, data, type, selected }: NodeProps<NodeData>) => {
 
           {/* Text Content */}
           <div className={`flex flex-col min-w-0 ${!hasIcon ? 'w-full' : ''} ${fontFamilyClass}`} style={{ textAlign: data.align || 'center', ...fontFamilyStyle }}>
+            {/* Checkbox + Label row */}
+            <div className={`flex items-start gap-2 ${data.isCheckbox ? '' : ''}`}>
+              {data.isCheckbox && (
+                <button
+                  onClick={toggleChecked}
+                  className={`shrink-0 mt-0.5 w-5 h-5 rounded border-2 flex items-center justify-center transition-all duration-150 cursor-pointer
+                    ${data.checked
+                      ? 'bg-indigo-500 border-indigo-500 text-white'
+                      : 'bg-white border-slate-300 hover:border-indigo-400'
+                    }`}
+                >
+                  {data.checked && <Check className="w-3.5 h-3.5" strokeWidth={3} />}
+                </button>
+              )}
+              <div className={`flex-1 min-w-0 ${data.isCheckbox && data.checked ? 'line-through opacity-50' : ''}`}>
             {editingLabel ? (
               <textarea
                 ref={labelRef}
@@ -293,20 +322,27 @@ const CustomNode = ({ id, data, type, selected }: NodeProps<NodeData>) => {
             )}
             {editingSubLabel ? (
               <textarea
-                ref={subLabelRef}
-                className="w-full bg-white/90 border border-indigo-400 rounded px-1 py-0.5 outline-none resize-none text-xs text-slate-600 mt-1 leading-normal"
+                ref={(el) => {
+                  (subLabelRef as React.MutableRefObject<HTMLTextAreaElement | null>).current = el;
+                  if (el) { el.style.height = 'auto'; el.style.height = el.scrollHeight + 'px'; }
+                }}
+                className="w-full bg-white/90 border border-indigo-400 rounded px-1 py-0.5 outline-none resize-none text-xs text-slate-600 mt-1 leading-normal overflow-hidden"
                 style={{
                   fontWeight: 'normal',
                   fontStyle: 'normal',
                   textAlign: data.align || 'center',
+                  minHeight: '3em',
                 }}
                 value={subLabelDraft}
-                onChange={(e) => setSubLabelDraft(e.target.value)}
+                onChange={(e) => {
+                  setSubLabelDraft(e.target.value);
+                  e.target.style.height = 'auto';
+                  e.target.style.height = e.target.scrollHeight + 'px';
+                }}
                 onBlur={commitSubLabel}
                 onKeyDown={handleSubLabelKeyDown}
                 onClick={stopPropagation}
                 onMouseDown={stopPropagation}
-                rows={Math.max(2, subLabelDraft.split('\n').length)}
               />
             ) : data.subLabel ? (
               <div
@@ -327,6 +363,21 @@ const CustomNode = ({ id, data, type, selected }: NodeProps<NodeData>) => {
                 onClick={(e) => { e.stopPropagation(); setSubLabelDraft(''); setEditingSubLabel(true); }}
               >
                 Click to add details
+              </div>
+            )}
+              </div>{/* close checkbox flex-1 wrapper */}
+            </div>{/* close checkbox + label row */}
+
+            {/* Clickable Link */}
+            {data.link && (
+              <div
+                className="flex items-center gap-1 mt-2 cursor-pointer group/link"
+                onClick={handleLinkClick}
+              >
+                <ExternalLink className="w-3 h-3 text-indigo-400 shrink-0" />
+                <span className="text-[11px] text-indigo-500 hover:text-indigo-700 group-hover/link:underline truncate max-w-[180px]">
+                  {data.link.replace(/^https?:\/\/(www\.)?/, '').slice(0, 40)}
+                </span>
               </div>
             )}
           </div>

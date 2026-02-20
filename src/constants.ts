@@ -8,7 +8,7 @@ export const EDGE_LABEL_BG_STYLE = { fill: '#ffffff', stroke: '#cbd5e1', strokeW
 
 /** Shared edge configuration — use `createDefaultEdge()` for most cases. */
 export const DEFAULT_EDGE_OPTIONS = {
-  type: 'smoothstep' as const,
+  type: 'straight' as const,
   markerEnd: { type: MarkerType.ArrowClosed },
   animated: false,
   style: EDGE_STYLE,

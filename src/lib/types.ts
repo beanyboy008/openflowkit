@@ -34,6 +34,9 @@ export interface NodeData {
   transparency?: number; // 0-1
   variant?: string; // wireframe preset key (e.g. 'landing', 'modal')
   autoFocusLabel?: boolean; // Transient: auto-enter edit mode on creation
+  link?: string; // URL that opens in new tab when clicked
+  isCheckbox?: boolean; // Whether node acts as a checkbox
+  checked?: boolean; // Checkbox state
 }
 
 export interface AIRequestParams {

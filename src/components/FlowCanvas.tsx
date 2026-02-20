@@ -33,6 +33,7 @@ import CustomConnectionLine from './CustomConnectionLine';
 import { ConnectMenu } from './ConnectMenu';
 import { ContextMenu, ContextMenuProps } from './ContextMenu';
 import { NavigationControls } from './NavigationControls';
+import { AlignmentGuides } from './AlignmentGuides';
 import { MINIMAP_NODE_COLORS, NODE_WIDTH, NODE_HEIGHT } from '../constants';
 
 interface FlowCanvasProps {
@@ -165,9 +166,24 @@ export const FlowCanvas: React.FC<FlowCanvasProps> = ({
     const onNodeContextMenu = useCallback(
         (event: React.MouseEvent, node: Node) => {
             event.preventDefault();
+            const selectedCount = useFlowStore.getState().nodes.filter(n => n.selected).length;
             setContextMenu({
                 id: node.id,
-                type: 'node',
+                type: selectedCount >= 2 ? 'multi' : 'node',
+                position: { x: event.clientX, y: event.clientY },
+                onClose: closeContextMenu,
+                isOpen: true,
+            });
+        },
+        [closeContextMenu]
+    );
+
+    const onSelectionContextMenu = useCallback(
+        (event: React.MouseEvent) => {
+            event.preventDefault();
+            setContextMenu({
+                id: null,
+                type: 'multi',
                 position: { x: event.clientX, y: event.clientY },
                 onClose: closeContextMenu,
                 isOpen: true,
@@ -238,6 +254,7 @@ export const FlowCanvas: React.FC<FlowCanvasProps> = ({
                 onNodeDoubleClick={onNodeDoubleClick}
                 onNodeContextMenu={onNodeContextMenu}
                 onPaneContextMenu={onPaneContextMenu}
+                onSelectionContextMenu={onSelectionContextMenu}
                 onEdgeContextMenu={onEdgeContextMenu}
                 onEdgeDoubleClick={useCallback((_event: React.MouseEvent, _edge: Edge) => {
                     // Double-click any edge → select all edges
@@ -268,7 +285,7 @@ export const FlowCanvas: React.FC<FlowCanvasProps> = ({
                 selectionOnDrag={isEffectiveSelectMode}
                 panOnDrag={!isEffectiveSelectMode}
                 selectionMode={isEffectiveSelectMode ? SelectionMode.Partial : undefined}
-                multiSelectionKeyCode="Alt"
+                multiSelectionKeyCode="Shift"
                 defaultEdgeOptions={{
                     style: { stroke: '#94a3b8', strokeWidth: 2 },
                     animated: false,
@@ -276,9 +293,9 @@ export const FlowCanvas: React.FC<FlowCanvasProps> = ({
                 }}
                 connectionLineComponent={CustomConnectionLine}
                 snapToGrid={snapToGrid}
-                snapGrid={[20, 20]}
+                snapGrid={[40, 40]}
             >
-                {showGrid && <Background variant={BackgroundVariant.Dots} gap={20} size={1} color="#cbd5e1" />}
+                {showGrid && <Background variant={BackgroundVariant.Dots} gap={40} size={1.5} color="#cbd5e1" />}
                 <NavigationControls />
                 {showMiniMap && (
                     <MiniMap
@@ -288,6 +305,7 @@ export const FlowCanvas: React.FC<FlowCanvasProps> = ({
                     />
                 )}
             </ReactFlow>
+            <AlignmentGuides />
 
             {connectMenu && (
                 <ConnectMenu

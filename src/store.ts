@@ -171,6 +171,10 @@ interface FlowState {
     selectedNodeId: string | null;
     selectedEdgeId: string | null;
 
+    // Alignment Guides (transient, not persisted)
+    activeGuides: { axis: 'x' | 'y'; position: number }[];
+    setActiveGuides: (guides: { axis: 'x' | 'y'; position: number }[]) => void;
+
     // Actions
     onNodesChange: OnNodesChange;
     onEdgesChange: OnEdgesChange;
@@ -257,7 +261,7 @@ export const useFlowStore = create<FlowState>()(
             },
 
             globalEdgeOptions: {
-                type: 'smoothstep',
+                type: 'straight',
                 animated: false,
                 strokeWidth: 2,
             },
@@ -268,6 +272,9 @@ export const useFlowStore = create<FlowState>()(
 
             selectedNodeId: null,
             selectedEdgeId: null,
+
+            activeGuides: [],
+            setActiveGuides: (guides) => set({ activeGuides: guides }),
 
             // React Flow Actions
             onNodesChange: (changes: NodeChange[]) => {

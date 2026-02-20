@@ -153,24 +153,68 @@ export const useNodeOperations = (recordHistory: () => void) => {
     }, [recordHistory, setNodes]);
 
     const onNodeDrag = useCallback((_event: React.MouseEvent, _node: Node, draggedNodes: Node[]) => {
-        const { nodes: storeNodes, edges, setEdges, viewSettings } = useFlowStore.getState();
+        const { nodes: storeNodes, edges, setEdges, viewSettings, setActiveGuides } = useFlowStore.getState();
 
-        if (!viewSettings.smartRoutingEnabled) return;
-
-        // "draggedNodes" contains only the nodes being dragged.
-        // "storeNodes" contains all nodes, but newly dragged ones might be stale in store until commit?
-        // Actually store updates on drag? ReactFlow updates internal state, and onNodesChange updates store.
-        // But onNodeDrag happens frequently.
-
-        // Merge logic to ensure valid routing
+        // Merge dragged positions into store nodes
         const draggedNodesMap = new Map(draggedNodes.map(n => [n.id, n]));
         const mergedNodes = storeNodes.map(n => draggedNodesMap.get(n.id) || n);
 
-        const smartEdges = assignSmartHandles(mergedNodes, edges);
-        setEdges(smartEdges);
+        // Smart routing
+        if (viewSettings.smartRoutingEnabled) {
+            const smartEdges = assignSmartHandles(mergedNodes, edges);
+            setEdges(smartEdges);
+        }
+
+        // Alignment guides
+        const THRESHOLD = 8;
+        const guides: { axis: 'x' | 'y'; position: number }[] = [];
+        const draggedIds = new Set(draggedNodes.map(n => n.id));
+        const otherNodes = mergedNodes.filter(n => !draggedIds.has(n.id) && n.type !== 'section');
+
+        for (const dragged of draggedNodes) {
+            const dw = (dragged.width ?? NODE_WIDTH);
+            const dh = (dragged.height ?? NODE_HEIGHT);
+            const dLeft = dragged.position.x;
+            const dCx = dLeft + dw / 2;
+            const dRight = dLeft + dw;
+            const dTop = dragged.position.y;
+            const dCy = dTop + dh / 2;
+            const dBottom = dTop + dh;
+
+            for (const other of otherNodes) {
+                const ow = (other.width ?? NODE_WIDTH);
+                const oh = (other.height ?? NODE_HEIGHT);
+                const oLeft = other.position.x;
+                const oCx = oLeft + ow / 2;
+                const oRight = oLeft + ow;
+                const oTop = other.position.y;
+                const oCy = oTop + oh / 2;
+                const oBottom = oTop + oh;
+
+                // X-axis alignment (vertical guide lines)
+                for (const [dVal, oVal] of [[dLeft, oLeft], [dLeft, oCx], [dLeft, oRight], [dCx, oLeft], [dCx, oCx], [dCx, oRight], [dRight, oLeft], [dRight, oCx], [dRight, oRight]]) {
+                    if (Math.abs(dVal - oVal) < THRESHOLD) {
+                        guides.push({ axis: 'x', position: oVal });
+                    }
+                }
+                // Y-axis alignment (horizontal guide lines)
+                for (const [dVal, oVal] of [[dTop, oTop], [dTop, oCy], [dTop, oBottom], [dCy, oTop], [dCy, oCy], [dCy, oBottom], [dBottom, oTop], [dBottom, oCy], [dBottom, oBottom]]) {
+                    if (Math.abs(dVal - oVal) < THRESHOLD) {
+                        guides.push({ axis: 'y', position: oVal });
+                    }
+                }
+            }
+        }
+
+        // Deduplicate guides
+        const unique = guides.filter((g, i, arr) =>
+            arr.findIndex(o => o.axis === g.axis && Math.abs(o.position - g.position) < 1) === i
+        );
+        setActiveGuides(unique);
     }, []);
 
     const onNodeDragStop = useCallback((_event: React.MouseEvent, draggedNode: Node) => {
+        useFlowStore.getState().setActiveGuides([]);
         const { nodes: currentNodes } = useFlowStore.getState();
 
         if (draggedNode.type === 'section') return;

@@ -1,7 +1,7 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { Node } from 'reactflow';
 import { NodeData } from '@/lib/types';
-import { Bold, Italic, List, ListOrdered, Code, Quote, Heading1, CheckSquare, Copy, Trash2, Box, AlignLeft, AlignCenter, AlignRight, Image as ImageIcon, Type, Layout, Palette, Star, Image as ImageStart } from 'lucide-react';
+import { Bold, Italic, List, ListOrdered, Code, Quote, Heading1, CheckSquare, Copy, Trash2, Box, AlignLeft, AlignCenter, AlignRight, Image as ImageIcon, Type, Layout, Palette, Star, Image as ImageStart, Link as LinkIcon } from 'lucide-react';
 import { useFlowStore } from '@/store';
 import { Button } from '../ui/Button';
 import { ShapeSelector } from './ShapeSelector';
@@ -385,9 +385,16 @@ export const NodeProperties: React.FC<NodePropertiesProps> = ({
                     {!isText && !isImage && !isWireframe && (
                         <div className="relative group/desc bg-slate-50/20 hover:bg-slate-50/40 transition-colors">
                             <textarea
-                                ref={descInputRef}
-                                value={selectedNode.data?.subLabel || ''} // Fallback to 'description' if needed, but using subLabel
-                                onFocus={() => setActiveField('subLabel')}
+                                ref={(el) => {
+                                    (descInputRef as React.MutableRefObject<HTMLTextAreaElement | null>).current = el;
+                                    if (el) { el.style.height = 'auto'; el.style.height = el.scrollHeight + 'px'; }
+                                }}
+                                value={selectedNode.data?.subLabel || ''}
+                                onFocus={(e) => {
+                                    setActiveField('subLabel');
+                                    e.target.style.height = 'auto';
+                                    e.target.style.height = e.target.scrollHeight + 'px';
+                                }}
                                 onBlur={() => setTimeout(() => setActiveField(null), 200)}
                                 onChange={(e) => {
                                     onChange(selectedNode.id, { subLabel: e.target.value });
@@ -396,7 +403,7 @@ export const NodeProperties: React.FC<NodePropertiesProps> = ({
                                 }}
                                 onKeyDown={descEditor.handleKeyDown}
                                 placeholder="Add description..."
-                                rows={1} // Start small
+                                rows={1}
                                 style={{ minHeight: '40px' }}
                                 className="w-full px-3 py-2.5 text-xs font-medium text-slate-600 outline-none resize-none leading-relaxed placeholder:text-slate-300 bg-transparent focus:bg-white focus:text-slate-800 transition-colors overflow-hidden"
                             />
@@ -406,6 +413,47 @@ export const NodeProperties: React.FC<NodePropertiesProps> = ({
                             </div>
                         </div>
                     )}
+
+                    {/* Link Input */}
+                    <div className="px-3 py-2 border-t border-slate-100 bg-white">
+                        <div className="flex items-center gap-2">
+                            <LinkIcon className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                            <input
+                                type="url"
+                                value={selectedNode.data?.link || ''}
+                                onChange={(e) => onChange(selectedNode.id, { link: e.target.value })}
+                                onKeyDown={(e) => e.stopPropagation()}
+                                placeholder="https://example.com"
+                                className="flex-1 text-xs text-slate-600 outline-none bg-transparent placeholder:text-slate-300"
+                            />
+                            {selectedNode.data?.link && (
+                                <button
+                                    onClick={() => onChange(selectedNode.id, { link: '' })}
+                                    className="text-slate-300 hover:text-slate-500 text-xs"
+                                >
+                                    &times;
+                                </button>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Checkbox Toggle */}
+                    <div className="px-3 py-2 border-t border-slate-100 bg-white flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                            <CheckSquare className="w-3.5 h-3.5 text-slate-400" />
+                            <span className="text-xs text-slate-600">Checkbox</span>
+                        </div>
+                        <button
+                            onClick={() => onChange(selectedNode.id, { isCheckbox: !selectedNode.data?.isCheckbox, checked: false })}
+                            className={`relative w-8 h-[18px] rounded-full transition-colors duration-200 ${
+                                selectedNode.data?.isCheckbox ? 'bg-indigo-500' : 'bg-slate-200'
+                            }`}
+                        >
+                            <div className={`absolute top-[2px] w-[14px] h-[14px] rounded-full bg-white shadow transition-transform duration-200 ${
+                                selectedNode.data?.isCheckbox ? 'translate-x-[16px]' : 'translate-x-[2px]'
+                            }`} />
+                        </button>
+                    </div>
                 </div>
             </CollapsibleSection>
 
