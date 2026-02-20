@@ -15,6 +15,10 @@ interface ShortcutHandlers {
   onAddNode: () => void;
   onSelectMode: () => void;
   onPanMode: () => void;
+  onCopy: () => void;
+  onPaste: () => void;
+  onPasteImage: (dataUrl: string) => void;
+  onPasteText: (text: string) => void;
 }
 
 export const useKeyboardShortcuts = ({
@@ -32,6 +36,10 @@ export const useKeyboardShortcuts = ({
   onAddNode,
   onSelectMode,
   onPanMode,
+  onCopy,
+  onPaste,
+  onPasteImage,
+  onPasteText,
 }: ShortcutHandlers) => {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -131,6 +139,59 @@ export const useKeyboardShortcuts = ({
         if (selectedNodeId) duplicateNode(selectedNodeId);
       }
 
+      // Copy (Cmd+C)
+      if (isCmdOrCtrl && e.key === 'c') {
+        const tag = (document.activeElement as HTMLElement)?.tagName;
+        const isEditable = tag === 'INPUT' || tag === 'TEXTAREA' || (document.activeElement as HTMLElement)?.isContentEditable;
+        if (!isEditable) {
+          e.preventDefault();
+          onCopy();
+          return;
+        }
+      }
+
+      // Paste (Cmd+V) — check clipboard for images first, then fall back to node paste
+      if (isCmdOrCtrl && e.key === 'v') {
+        const tag = (document.activeElement as HTMLElement)?.tagName;
+        const isEditable = tag === 'INPUT' || tag === 'TEXTAREA' || (document.activeElement as HTMLElement)?.isContentEditable;
+        if (!isEditable) {
+          e.preventDefault();
+          navigator.clipboard.read().then((items) => {
+            // 1. Check for image
+            for (const item of items) {
+              const imageType = item.types.find((t) => t.startsWith('image/'));
+              if (imageType) {
+                item.getType(imageType).then((blob) => {
+                  const reader = new FileReader();
+                  reader.onload = (ev) => {
+                    const dataUrl = ev.target?.result as string;
+                    if (dataUrl) onPasteImage(dataUrl);
+                  };
+                  reader.readAsDataURL(blob);
+                });
+                return;
+              }
+            }
+            // 2. Read text — check if it's our internal marker
+            navigator.clipboard.readText().then((text) => {
+              if (text === '[OFK:nodes]') {
+                // User copied nodes internally and hasn't copied anything else since
+                onPaste();
+              } else if (text && text.trim()) {
+                // External text on clipboard — create a node with it
+                onPasteText(text.trim());
+              } else {
+                onPaste();
+              }
+            }).catch(() => onPaste());
+          }).catch(() => {
+            // Clipboard API failed (permissions) — fall back to node paste
+            onPaste();
+          });
+          return;
+        }
+      }
+
       // Select All
       if (isCmdOrCtrl && e.key === 'a') {
         e.preventDefault();
@@ -147,5 +208,5 @@ export const useKeyboardShortcuts = ({
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [selectedNodeId, selectedEdgeId, deleteNode, deleteEdge, undo, redo, duplicateNode, selectAll, onCommandBar, onSearch, onShortcutsHelp, onAddNode, onSelectMode, onPanMode]);
+  }, [selectedNodeId, selectedEdgeId, deleteNode, deleteEdge, undo, redo, duplicateNode, selectAll, onCommandBar, onSearch, onShortcutsHelp, onAddNode, onSelectMode, onPanMode, onCopy, onPaste, onPasteImage, onPasteText]);
 };

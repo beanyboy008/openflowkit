@@ -1,9 +1,11 @@
 import React from 'react';
 import { Node, Edge } from 'reactflow';
 import { NodeData } from '@/lib/types';
-import { Layout, ArrowRight, X, Settings2 } from 'lucide-react';
+import { Layout, ArrowRight, X, Settings2, Layers } from 'lucide-react';
 import { NodeProperties } from './properties/NodeProperties';
 import { EdgeProperties } from './properties/EdgeProperties';
+import { BulkEdgeProperties } from './properties/BulkEdgeProperties';
+import { useFlowStore } from '../store';
 
 interface PropertiesPanelProps {
     selectedNode: Node<NodeData> | null;
@@ -30,7 +32,19 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
     onUpdateZIndex,
     onClose
 }) => {
-    if (!selectedNode && !selectedEdge) return null;
+    const nodes = useFlowStore((s) => s.nodes);
+    const edges = useFlowStore((s) => s.edges);
+    const updateSelectedEdges = useFlowStore((s) => s.updateSelectedEdges);
+    const selectedEdges = edges.filter((e) => e.selected);
+    const selectedNodes = nodes.filter((n) => n.selected);
+
+    // Show bulk edge panel when multiple edges are selected — even if nodes are too (e.g. Cmd+A)
+    // Only show single-node panel when exactly 1 node is selected
+    const showBulkEdge = selectedEdges.length > 1;
+    const showSingleNode = selectedNode && selectedNodes.length === 1 && !showBulkEdge;
+    const showSingleEdge = selectedEdge && selectedEdges.length === 1 && !selectedNode;
+
+    if (!showSingleNode && !showSingleEdge && !showBulkEdge) return null;
 
     const isAnnotation = selectedNode?.type === 'annotation';
 
@@ -38,7 +52,12 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
         <div className="absolute top-20 right-6 w-80 bg-[var(--brand-surface)]/95 backdrop-blur-md rounded-[var(--radius-lg)] shadow-2xl border border-white/20 ring-1 ring-black/5 flex flex-col overflow-hidden max-h-[calc(100vh-140px)] z-50 animate-in slide-in-from-right-10 duration-200">
             <div className="flex items-center justify-between p-4 border-b border-slate-100 bg-[var(--brand-surface)]">
                 <h3 className="font-semibold text-[var(--brand-text)] flex items-center gap-2">
-                    {selectedNode ? (
+                    {showBulkEdge ? (
+                        <>
+                            <Layers className="w-4 h-4 text-[var(--brand-primary)]" />
+                            <span>Bulk Edge Edit</span>
+                        </>
+                    ) : showSingleNode ? (
                         <>
                             <Settings2 className="w-4 h-4 text-[var(--brand-primary)]" />
                             <span>{isAnnotation ? 'Sticky Note' : 'Node Settings'}</span>
@@ -56,7 +75,14 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
             </div>
 
             <div className="p-4 overflow-y-auto custom-scrollbar space-y-6 flex-1">
-                {selectedNode && (
+                {showBulkEdge && (
+                    <BulkEdgeProperties
+                        selectedCount={selectedEdges.length}
+                        onUpdate={updateSelectedEdges}
+                    />
+                )}
+
+                {showSingleNode && selectedNode && (
                     <NodeProperties
                         selectedNode={selectedNode}
                         onChange={onChangeNode}
@@ -65,7 +91,7 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
                     />
                 )}
 
-                {selectedEdge && (
+                {showSingleEdge && selectedEdge && (
                     <EdgeProperties
                         selectedEdge={selectedEdge}
                         onChange={onChangeEdge}

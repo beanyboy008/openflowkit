@@ -72,6 +72,16 @@ const CustomNode = ({ id, data, type, selected }: NodeProps<NodeData>) => {
     if (editingSubLabel && subLabelRef.current) { subLabelRef.current.focus(); subLabelRef.current.select(); }
   }, [editingSubLabel]);
 
+  // Auto-focus label on creation (N key)
+  useEffect(() => {
+    if (data.autoFocusLabel) {
+      setEditingLabel(true);
+      setNodes((nodes) => nodes.map((n) =>
+        n.id === id ? { ...n, data: { ...n.data, autoFocusLabel: undefined } } : n
+      ));
+    }
+  }, [data.autoFocusLabel, id, setNodes]);
+
   const defaults = getDefaults(type || 'process');
   const activeColor = data.color || defaults.color;
   const activeIconKey = data.icon === 'none' ? null : (data.icon || defaults.icon);
@@ -272,9 +282,13 @@ const CustomNode = ({ id, data, type, selected }: NodeProps<NodeData>) => {
                   fontWeight: data.fontWeight || 'bold',
                   fontStyle: data.fontStyle || 'normal',
                 }}
-                onDoubleClick={(e) => { e.stopPropagation(); setEditingLabel(true); }}
+                onClick={(e) => { e.stopPropagation(); setEditingLabel(true); }}
               >
-                <MemoizedMarkdown content={data.label || 'Node'} />
+                {data.label ? (
+                  <MemoizedMarkdown content={data.label} />
+                ) : (
+                  <span className="text-slate-400 italic">Untitled</span>
+                )}
               </div>
             )}
             {editingSubLabel ? (
@@ -303,16 +317,16 @@ const CustomNode = ({ id, data, type, selected }: NodeProps<NodeData>) => {
                   textAlign: data.align || 'center',
                   opacity: 0.85
                 }}
-                onDoubleClick={(e) => { e.stopPropagation(); setEditingSubLabel(true); }}
+                onClick={(e) => { e.stopPropagation(); setEditingSubLabel(true); }}
               >
                 <MemoizedMarkdown content={data.subLabel} />
               </div>
             ) : (
               <div
                 className="text-xs text-slate-400 mt-1 cursor-text italic"
-                onDoubleClick={(e) => { e.stopPropagation(); setSubLabelDraft(''); setEditingSubLabel(true); }}
+                onClick={(e) => { e.stopPropagation(); setSubLabelDraft(''); setEditingSubLabel(true); }}
               >
-                Double-click to add details
+                Click to add details
               </div>
             )}
           </div>
@@ -333,7 +347,7 @@ const CustomNode = ({ id, data, type, selected }: NodeProps<NodeData>) => {
         id="top"
         isConnectableStart={true}
         isConnectableEnd={true}
-        className={`!w-3 !h-3 !border-2 !border-white ${style.handle} transition-all duration-150 hover:scale-125 ${selected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100 [.is-connecting_&]:opacity-100'}`}
+        className={`!w-4 !h-4 !border-2 !border-white ${style.handle} transition-all duration-150 hover:!scale-150 ${selected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100 [.is-connecting_&]:opacity-100'}`}
         style={{ left: '50%', top: 0, transform: 'translate(-50%, -50%)', pointerEvents: 'all' }}
       />
 
@@ -343,7 +357,7 @@ const CustomNode = ({ id, data, type, selected }: NodeProps<NodeData>) => {
         id="bottom"
         isConnectableStart={true}
         isConnectableEnd={true}
-        className={`!w-3 !h-3 !border-2 !border-white ${style.handle} transition-all duration-150 hover:scale-125 ${selected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100 [.is-connecting_&]:opacity-100'}`}
+        className={`!w-4 !h-4 !border-2 !border-white ${style.handle} transition-all duration-150 hover:!scale-150 ${selected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100 [.is-connecting_&]:opacity-100'}`}
         style={{ left: '50%', top: '100%', transform: 'translate(-50%, -50%)', pointerEvents: 'all' }}
       />
 
@@ -353,7 +367,7 @@ const CustomNode = ({ id, data, type, selected }: NodeProps<NodeData>) => {
         id="left"
         isConnectableStart={true}
         isConnectableEnd={true}
-        className={`!w-3 !h-3 !border-2 !border-white ${style.handle} transition-all duration-150 hover:scale-125 ${selected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100 [.is-connecting_&]:opacity-100'}`}
+        className={`!w-4 !h-4 !border-2 !border-white ${style.handle} transition-all duration-150 hover:!scale-150 ${selected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100 [.is-connecting_&]:opacity-100'}`}
         style={{ top: '50%', left: 0, transform: 'translate(-50%, -50%)', pointerEvents: 'all' }}
       />
 
@@ -363,7 +377,7 @@ const CustomNode = ({ id, data, type, selected }: NodeProps<NodeData>) => {
         id="right"
         isConnectableStart={true}
         isConnectableEnd={true}
-        className={`!w-3 !h-3 !border-2 !border-white ${style.handle} transition-all duration-150 hover:scale-125 ${selected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100 [.is-connecting_&]:opacity-100'}`}
+        className={`!w-4 !h-4 !border-2 !border-white ${style.handle} transition-all duration-150 hover:!scale-150 ${selected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100 [.is-connecting_&]:opacity-100'}`}
         style={{ top: '50%', left: '100%', transform: 'translate(-50%, -50%)', pointerEvents: 'all' }}
       />
     </>

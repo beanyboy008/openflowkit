@@ -63,12 +63,24 @@ export function FlowEditor({ onGoHome }: FlowEditorProps) {
     };
 
     const reactFlowWrapper = useRef<HTMLDivElement>(null);
+    const mouseScreenPos = useRef<{ x: number; y: number }>({ x: window.innerWidth / 2, y: window.innerHeight / 2 });
     const { fitView, screenToFlowPosition } = useReactFlow();
 
     const getCenter = useCallback(() => {
         const centerX = window.innerWidth / 2;
         const centerY = window.innerHeight / 2;
         return screenToFlowPosition({ x: centerX, y: centerY });
+    }, [screenToFlowPosition]);
+
+    // Track mouse position for N-key node placement
+    React.useEffect(() => {
+        const handler = (e: MouseEvent) => { mouseScreenPos.current = { x: e.clientX, y: e.clientY }; };
+        window.addEventListener('mousemove', handler);
+        return () => window.removeEventListener('mousemove', handler);
+    }, []);
+
+    const getMouseFlowPosition = useCallback(() => {
+        return screenToFlowPosition(mouseScreenPos.current);
     }, [screenToFlowPosition]);
 
     // --- History ---
@@ -111,7 +123,8 @@ export function FlowEditor({ onGoHome }: FlowEditorProps) {
         updateNodeData, updateNodeType, updateNodeZIndex, updateEdge,
         deleteNode, deleteEdge, duplicateNode,
         handleAddNode, handleAddAnnotation, handleAddSection, handleAddTextNode, handleAddImage,
-        handleClear
+        handleClear,
+        copySelection, pasteSelection,
     } = useFlowOperations(recordHistory);
 
     const selectAll = useCallback(() => {
@@ -126,9 +139,24 @@ export function FlowEditor({ onGoHome }: FlowEditorProps) {
         onCommandBar: () => openCommandBar('root'),
         onSearch: () => openCommandBar('search'),
         onShortcutsHelp: () => setShortcutsHelpOpen(true),
-        onAddNode: () => handleAddNode(getCenter()),
+        onAddNode: () => handleAddNode(getMouseFlowPosition()),
         onSelectMode: () => setIsSelectMode(true),
         onPanMode: () => setIsSelectMode(false),
+        onCopy: copySelection,
+        onPaste: () => pasteSelection(),
+        onPasteImage: (dataUrl: string) => handleAddImage(dataUrl, getMouseFlowPosition()),
+        onPasteText: (text: string) => {
+            recordHistory();
+            const pos = getMouseFlowPosition();
+            const id = `${Date.now()}`;
+            setNodes((nds) => [...nds.map((n) => ({ ...n, selected: false })), {
+                id,
+                position: pos,
+                data: { label: text, subLabel: '', color: 'slate' },
+                type: 'process',
+            }]);
+            setSelectedNodeId(id);
+        },
     });
 
     // --- AI ---

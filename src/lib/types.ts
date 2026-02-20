@@ -33,6 +33,7 @@ export interface NodeData {
   backgroundColor?: string;
   transparency?: number; // 0-1
   variant?: string; // wireframe preset key (e.g. 'landing', 'modal')
+  autoFocusLabel?: boolean; // Transient: auto-enter edit mode on creation
 }
 
 export interface AIRequestParams {

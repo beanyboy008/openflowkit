@@ -239,6 +239,12 @@ export const FlowCanvas: React.FC<FlowCanvasProps> = ({
                 onNodeContextMenu={onNodeContextMenu}
                 onPaneContextMenu={onPaneContextMenu}
                 onEdgeContextMenu={onEdgeContextMenu}
+                onEdgeDoubleClick={useCallback((_event: React.MouseEvent, _edge: Edge) => {
+                    // Double-click any edge → select all edges
+                    const { setEdges, setNodes } = useFlowStore.getState();
+                    setNodes((nds) => nds.map((n) => ({ ...n, selected: false })));
+                    setEdges((eds) => eds.map((e) => ({ ...e, selected: true })));
+                }, [])}
                 onPaneClick={onPaneClick}
 
                 onConnectStart={onConnectStartWrapper}
@@ -270,6 +276,7 @@ export const FlowCanvas: React.FC<FlowCanvasProps> = ({
                 }}
                 connectionLineComponent={CustomConnectionLine}
                 snapToGrid={snapToGrid}
+                snapGrid={[20, 20]}
             >
                 {showGrid && <Background variant={BackgroundVariant.Dots} gap={20} size={1} color="#cbd5e1" />}
                 <NavigationControls />

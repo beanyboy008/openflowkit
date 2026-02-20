@@ -218,6 +218,9 @@ interface FlowState {
     // Selection Actions
     setSelectedNodeId: (id: string | null) => void;
     setSelectedEdgeId: (id: string | null) => void;
+
+    // Bulk Edge Actions
+    updateSelectedEdges: (updates: { strokeWidth?: number; dashPattern?: string }) => void;
 }
 
 import { persist } from 'zustand/middleware'; // Import persist
@@ -574,6 +577,22 @@ export const useFlowStore = create<FlowState>()(
             // Selection Actions
             setSelectedNodeId: (id) => set({ selectedNodeId: id }),
             setSelectedEdgeId: (id) => set({ selectedEdgeId: id }),
+
+            // Bulk Edge Actions
+            updateSelectedEdges: (updates) => set((state) => {
+                const dashArrayMap: Record<string, string> = { solid: '', dashed: '8 4', dotted: '2 4', dashdot: '8 4 2 4' };
+                const updatedEdges = state.edges.map((e) => {
+                    if (!e.selected) return e;
+                    const newData = { ...e.data };
+                    if (updates.strokeWidth !== undefined) newData.strokeWidth = updates.strokeWidth;
+                    if (updates.dashPattern !== undefined) newData.dashPattern = updates.dashPattern as any;
+                    const newStyle = { ...e.style };
+                    if (updates.strokeWidth !== undefined) newStyle.strokeWidth = updates.strokeWidth;
+                    if (updates.dashPattern !== undefined) newStyle.strokeDasharray = dashArrayMap[updates.dashPattern] || '';
+                    return { ...e, data: newData, style: newStyle };
+                });
+                return { edges: updatedEdges };
+            }),
         }),
         {
             name: 'openflowkit-storage', // unique name

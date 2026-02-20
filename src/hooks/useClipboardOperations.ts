@@ -15,6 +15,8 @@ export const useClipboardOperations = (recordHistory: () => void) => {
                 edges: selectedEdges,
             };
             localStorage.setItem('flowmind-clipboard', JSON.stringify(clipboardData));
+            // Write marker to system clipboard so paste knows these are internal nodes
+            navigator.clipboard.writeText('[OFK:nodes]').catch(() => {});
         }
     }, [nodes, edges]);
 

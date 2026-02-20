@@ -67,7 +67,7 @@ export const useNodeOperations = (recordHistory: () => void) => {
         const newNode: Node = {
             id,
             position: position || { x: Math.random() * 200 + 100, y: Math.random() * 200 + 100 },
-            data: { label: 'New Node', subLabel: 'Process Step', color: 'slate' },
+            data: { label: '', subLabel: '', color: 'slate', autoFocusLabel: true },
             type: 'process',
         };
         setNodes((nds) => nds.concat(newNode));

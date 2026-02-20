@@ -78,6 +78,7 @@ const CustomEdgeWrapper = ({
     data,
     label,
     markerStart,
+    selected,
 }: {
     id: string;
     path: string;
@@ -88,6 +89,7 @@ const CustomEdgeWrapper = ({
     data?: EdgeData;
     label?: string | React.ReactNode;
     markerStart?: string;
+    selected?: boolean;
 }) => {
     const { setEdges, screenToFlowPosition } = useReactFlow();
     const { zoom } = useViewport();
@@ -153,9 +155,23 @@ const CustomEdgeWrapper = ({
         window.addEventListener('pointerup', onPointerUp);
     };
 
+    const edgeStyle = selected
+        ? { ...style, stroke: '#6366f1', strokeWidth: ((style?.strokeWidth as number) || 2) + 1 }
+        : style;
+
     return (
         <>
-            <BaseEdge path={path} markerEnd={markerEnd} markerStart={markerStart} style={style} />
+            {selected && (
+                <path
+                    d={path}
+                    fill="none"
+                    stroke="#6366f1"
+                    strokeWidth={((style?.strokeWidth as number) || 2) + 6}
+                    strokeOpacity={0.3}
+                    strokeLinecap="round"
+                />
+            )}
+            <BaseEdge path={path} markerEnd={markerEnd} markerStart={markerStart} style={edgeStyle} />
             <path ref={pathRef} d={path} style={{ display: 'none' }} fill="none" stroke="none" aria-hidden="true" />
 
             {label && (
@@ -225,7 +241,7 @@ export const CustomBezierEdge = (props: EdgeProps<EdgeData>) => {
         });
     }
 
-    return <CustomEdgeWrapper id={props.id} path={edgePath} labelX={labelX} labelY={labelY} {...props} />;
+    return <CustomEdgeWrapper id={props.id} path={edgePath} labelX={labelX} labelY={labelY} selected={props.selected} {...props} />;
 };
 
 export const CustomSmoothStepEdge = (props: EdgeProps<EdgeData>) => {
@@ -257,7 +273,7 @@ export const CustomSmoothStepEdge = (props: EdgeProps<EdgeData>) => {
         });
     }
 
-    return <CustomEdgeWrapper id={props.id} path={edgePath} labelX={labelX} labelY={labelY} {...props} />;
+    return <CustomEdgeWrapper id={props.id} path={edgePath} labelX={labelX} labelY={labelY} selected={props.selected} {...props} />;
 };
 
 export const CustomStepEdge = (props: EdgeProps<EdgeData>) => {
@@ -288,7 +304,7 @@ export const CustomStepEdge = (props: EdgeProps<EdgeData>) => {
         });
     }
 
-    return <CustomEdgeWrapper id={props.id} path={edgePath} labelX={labelX} labelY={labelY} {...props} />;
+    return <CustomEdgeWrapper id={props.id} path={edgePath} labelX={labelX} labelY={labelY} selected={props.selected} {...props} />;
 };
 
 export default CustomSmoothStepEdge;
