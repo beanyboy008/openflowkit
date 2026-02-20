@@ -225,6 +225,9 @@ interface FlowState {
 
     // Bulk Edge Actions
     updateSelectedEdges: (updates: { strokeWidth?: number; dashPattern?: string }) => void;
+
+    // Bulk Node Actions
+    updateSelectedNodes: (data: Partial<import('./lib/types').NodeData>) => void;
 }
 
 import { persist } from 'zustand/middleware'; // Import persist
@@ -600,6 +603,12 @@ export const useFlowStore = create<FlowState>()(
                 });
                 return { edges: updatedEdges };
             }),
+            // Bulk Node Actions
+            updateSelectedNodes: (data) => set((state) => ({
+                nodes: state.nodes.map((n) =>
+                    n.selected ? { ...n, data: { ...n.data, ...data } } : n
+                ),
+            })),
         }),
         {
             name: 'openflowkit-storage', // unique name

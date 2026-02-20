@@ -5,6 +5,7 @@ import { Layout, ArrowRight, X, Settings2, Layers } from 'lucide-react';
 import { NodeProperties } from './properties/NodeProperties';
 import { EdgeProperties } from './properties/EdgeProperties';
 import { BulkEdgeProperties } from './properties/BulkEdgeProperties';
+import { BulkNodeProperties } from './properties/BulkNodeProperties';
 import { useFlowStore } from '../store';
 
 interface PropertiesPanelProps {
@@ -35,16 +36,19 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
     const nodes = useFlowStore((s) => s.nodes);
     const edges = useFlowStore((s) => s.edges);
     const updateSelectedEdges = useFlowStore((s) => s.updateSelectedEdges);
+    const updateSelectedNodes = useFlowStore((s) => s.updateSelectedNodes);
     const selectedEdges = edges.filter((e) => e.selected);
     const selectedNodes = nodes.filter((n) => n.selected);
 
     // Show bulk edge panel when multiple edges are selected — even if nodes are too (e.g. Cmd+A)
+    // Show bulk node panel when multiple nodes are selected (and no bulk edge)
     // Only show single-node panel when exactly 1 node is selected
     const showBulkEdge = selectedEdges.length > 1;
+    const showBulkNode = selectedNodes.length > 1 && !showBulkEdge;
     const showSingleNode = selectedNode && selectedNodes.length === 1 && !showBulkEdge;
     const showSingleEdge = selectedEdge && selectedEdges.length === 1 && !selectedNode;
 
-    if (!showSingleNode && !showSingleEdge && !showBulkEdge) return null;
+    if (!showSingleNode && !showSingleEdge && !showBulkEdge && !showBulkNode) return null;
 
     const isAnnotation = selectedNode?.type === 'annotation';
 
@@ -56,6 +60,11 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
                         <>
                             <Layers className="w-4 h-4 text-[var(--brand-primary)]" />
                             <span>Bulk Edge Edit</span>
+                        </>
+                    ) : showBulkNode ? (
+                        <>
+                            <Layers className="w-4 h-4 text-[var(--brand-primary)]" />
+                            <span>Bulk Node Edit</span>
                         </>
                     ) : showSingleNode ? (
                         <>
@@ -79,6 +88,13 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
                     <BulkEdgeProperties
                         selectedCount={selectedEdges.length}
                         onUpdate={updateSelectedEdges}
+                    />
+                )}
+
+                {showBulkNode && (
+                    <BulkNodeProperties
+                        selectedCount={selectedNodes.length}
+                        onUpdate={updateSelectedNodes}
                     />
                 )}
 
