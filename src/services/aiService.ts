@@ -21,6 +21,15 @@ const DEFAULT_MODELS: Record<string, string> = {
     custom: 'gpt-4o',
 };
 
+/** Append a complexity hint based on input word count */
+function getComplexityHint(input: string): string {
+    const wordCount = input.split(/\s+/).filter(Boolean).length;
+    if (wordCount < 30) return '\n[Target: 5-8 nodes]';
+    if (wordCount < 80) return '\n[Target: 10-15 nodes with parallel tracks]';
+    if (wordCount < 200) return '\n[Target: 15-22 nodes with decisions + annotations]';
+    return '\n[Target: 20-25 high-level nodes]';
+}
+
 /** Convert FlowMind chat history to OpenAI-compatible message format */
 function historyToMessages(history: ChatMessage[]): { role: string; content: string }[] {
     return history.map(h => ({
@@ -79,6 +88,7 @@ async function callClaude(
             system: getSystemInstruction(),
             messages,
             max_tokens: 4096,
+            temperature: 0.2,
         }),
     });
 
@@ -108,7 +118,8 @@ export async function generateDiagramFromChat(
         throw new Error("API Key is missing. Please add it in Settings → Brand → Flowpilot.");
     }
 
-    const userPrompt = `User Request: ${newMessage}${currentDSL ? `\n\nCURRENT CONTENT (The user wants to update this):\n${currentDSL}` : ''}\n\nGenerate or update the FlowMind DSL based on this request.`;
+    const complexityHint = getComplexityHint(newMessage);
+    const userPrompt = `User Request: ${newMessage}${currentDSL ? `\n\nCURRENT CONTENT (The user wants to update this):\n${currentDSL}` : ''}\n\nGenerate or update the FlowMind DSL based on this request.${complexityHint}`;
 
     // Gemini uses its own SDK with different prompt structure — delegate directly
     if (provider === 'gemini') {

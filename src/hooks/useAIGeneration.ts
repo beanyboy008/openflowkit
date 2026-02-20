@@ -30,14 +30,14 @@ export const useAIGeneration = (
     };
 
     try {
-      // 1. Prepare context
+      // 1. Prepare context (include icon + color for style-consistent updates)
       const simplifiedNodes = nodes.map((n) => ({
         id: n.id,
         type: n.type,
         label: n.data.label,
         description: n.data.subLabel,
-        x: n.position.x,
-        y: n.position.y
+        icon: n.data.icon,
+        color: n.data.color,
       }));
 
       const currentGraph = JSON.stringify({
@@ -50,20 +50,81 @@ export const useAIGeneration = (
       // 2. Call AI (now using unified service)
       // Fall back to env var at runtime — Zustand persist can serialize apiKey as undefined
       const apiKey = brandConfig.apiKey || import.meta.env.VITE_ANTHROPIC_API_KEY;
-      const dslText = await generateDiagramFromChat(
+
+      const callAI = (msg: string, img?: string) => generateDiagramFromChat(
         chatMessages,
-        prompt,
+        msg,
         currentGraph,
-        imageBase64,
+        img,
         apiKey,
         brandConfig.aiModel,
         brandConfig.aiProvider || 'gemini',
         brandConfig.customBaseUrl
       );
 
+      let dslText = await callAI(prompt, imageBase64);
+
       // 3. Update Chat History
       if (imageBase64) {
         userMessage.parts[0].text += " [Image Attached]";
+      }
+
+      // 4. Parse DSL (with self-correction retry)
+      const cleanDSL = (raw: string) => raw.replace(/```(yaml|flowmind|)?/g, '').replace(/```/g, '').trim();
+
+      let parseResult = parseOpenFlowDSL(cleanDSL(dslText));
+
+      // Step 9: If parse error, feed error back to AI for one retry
+      if (parseResult.error) {
+        console.warn('Parse error, attempting self-correction:', parseResult.error);
+        const correctionPrompt = `Your DSL had a parse error: "${parseResult.error}". Please fix and output corrected FlowMind DSL only.`;
+        dslText = await callAI(correctionPrompt);
+        parseResult = parseOpenFlowDSL(cleanDSL(dslText));
+        if (parseResult.error) {
+          throw new Error(parseResult.error);
+        }
+      }
+
+      // Step 8: Structural quality validation
+      const qualityIssues: string[] = [];
+      const nonNoteNodes = parseResult.nodes.filter(n => n.type !== 'annotation');
+
+      if (nonNoteNodes.length >= 5) {
+        // Type diversity: need 3+ node types
+        const nodeTypes = new Set(parseResult.nodes.map(n => n.type));
+        if (nodeTypes.size < 3) {
+          qualityIssues.push(`Only ${nodeTypes.size} node type(s) used — need at least 3 (e.g., start, process, decision, end, note)`);
+        }
+
+        // Linearity check: count nodes with 2+ outgoing edges
+        const outDegree = new Map<string, number>();
+        parseResult.edges.forEach(e => outDegree.set(e.source, (outDegree.get(e.source) || 0) + 1));
+        const branchingNodes = [...outDegree.values()].filter(d => d >= 2).length;
+        if (branchingNodes < 1) {
+          qualityIssues.push('No branching — every node has at most 1 outgoing edge. Add decision points or parallel paths.');
+        }
+      }
+
+      // Completeness: non-note nodes should have icons + colors + subLabels
+      const incompleteNodes = nonNoteNodes.filter(n =>
+        !n.data.icon || !n.data.color || !n.data.subLabel
+      );
+      if (incompleteNodes.length > 0) {
+        qualityIssues.push(`${incompleteNodes.length} node(s) missing icon, color, or subLabel: ${incompleteNodes.map(n => n.data.label || n.id).join(', ')}`);
+      }
+
+      // Auto-retry once if quality fails
+      if (qualityIssues.length > 0) {
+        console.warn('Quality issues detected, retrying:', qualityIssues);
+        const retryPrompt = `Your diagram has these quality issues:\n${qualityIssues.map((q, i) => `${i + 1}. ${q}`).join('\n')}\n\nPlease regenerate with fixes. Output corrected FlowMind DSL only.`;
+        const retryDsl = await callAI(retryPrompt);
+        const retryResult = parseOpenFlowDSL(cleanDSL(retryDsl));
+        // Use retry result only if it parses successfully and has nodes
+        if (!retryResult.error && retryResult.nodes.length > 0) {
+          dslText = retryDsl;
+          parseResult = retryResult;
+        }
+        // Otherwise keep the original (imperfect but parseable)
       }
 
       const modelMessage: ChatMessage = {
@@ -72,17 +133,6 @@ export const useAIGeneration = (
       };
 
       setChatMessages(prev => [...prev, userMessage, modelMessage]);
-
-      // 4. Parse DSL
-      // Strip markdown code blocks if present
-      const cleanDSL = dslText.replace(/```(yaml|flowmind|)?/g, '').replace(/```/g, '').trim();
-
-      // Use the wrapped V2 parser
-      const parseResult = parseOpenFlowDSL(cleanDSL);
-
-      if (parseResult.error) {
-        throw new Error(parseResult.error);
-      }
 
       // 5. Merge Logic: Preserve IDs for existing labels
       // We expect the AI to try and preserve labels.
