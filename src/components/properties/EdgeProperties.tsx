@@ -201,7 +201,7 @@ export const EdgeProperties: React.FC<EdgePropertiesProps> = ({
                 </div>
             </div>
 
-            <div className="pt-4 border-t border-slate-100">
+            <div className="pt-4 border-t border-slate-100 space-y-2">
                 <Button
                     onClick={() => onDelete(selectedEdge.id)}
                     variant="danger"

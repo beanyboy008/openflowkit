@@ -13,8 +13,6 @@ import { FlowNode, FlowEdge, FlowTab, FlowHistoryState, GlobalEdgeOptions, Desig
 
 import { INITIAL_NODES, INITIAL_EDGES, createDefaultEdge } from './constants';
 import { NODE_DEFAULTS } from './theme';
-import { assignSmartHandles } from './services/smartEdgeRouting';
-
 // --- Default Design System ---
 export const DEFAULT_DESIGN_SYSTEM: DesignSystem = {
     id: 'default',
@@ -64,7 +62,6 @@ interface ViewSettings {
     showMiniMap: boolean;
     isShortcutsHelpOpen: boolean;
     defaultIconsEnabled: boolean;
-    smartRoutingEnabled: boolean;
     analyticsEnabled: boolean;
 }
 
@@ -205,7 +202,6 @@ interface FlowState {
 
     setGlobalEdgeOptions: (options: Partial<GlobalEdgeOptions>) => void;
     setDefaultIconsEnabled: (enabled: boolean) => void;
-    setSmartRoutingEnabled: (enabled: boolean) => void;
     toggleAnalytics: (enabled: boolean) => void;
 
 
@@ -260,7 +256,6 @@ export const useFlowStore = create<FlowState>()(
                 showMiniMap: true,
                 isShortcutsHelpOpen: false,
                 defaultIconsEnabled: true,
-                smartRoutingEnabled: true,
                 analyticsEnabled: true,
             },
 
@@ -496,18 +491,6 @@ export const useFlowStore = create<FlowState>()(
                 return {
                     viewSettings: newViewSettings,
                     nodes: updatedNodes
-                };
-            }),
-
-            setSmartRoutingEnabled: (enabled) => set((state) => {
-                let newEdges = state.edges;
-                if (enabled) {
-                    // Apply smart routing immediately when enabled
-                    newEdges = assignSmartHandles(state.nodes, state.edges);
-                }
-                return {
-                    viewSettings: { ...state.viewSettings, smartRoutingEnabled: enabled },
-                    edges: newEdges
                 };
             }),
 

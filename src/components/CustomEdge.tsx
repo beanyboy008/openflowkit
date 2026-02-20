@@ -1,5 +1,5 @@
-import React, { useCallback, useRef, useState, useMemo } from 'react';
-import { BaseEdge, EdgeLabelRenderer, EdgeProps, getBezierPath, getSmoothStepPath, getStraightPath, useReactFlow, useViewport, useEdges } from 'reactflow';
+import React, { useRef } from 'react';
+import { BaseEdge, EdgeLabelRenderer, EdgeProps, getBezierPath, getSmoothStepPath, useReactFlow, useEdges } from 'reactflow';
 import { EdgeData } from '@/lib/types';
 
 // --- Parallel edge offset utility ---
@@ -92,7 +92,6 @@ const CustomEdgeWrapper = ({
     selected?: boolean;
 }) => {
     const { setEdges, screenToFlowPosition } = useReactFlow();
-    const { zoom } = useViewport();
     const pathRef = useRef<SVGPathElement>(null);
 
     // Calculate position along path for label
@@ -241,7 +240,12 @@ export const CustomBezierEdge = (props: EdgeProps<EdgeData>) => {
         });
     }
 
-    return <CustomEdgeWrapper id={props.id} path={edgePath} labelX={labelX} labelY={labelY} selected={props.selected} {...props} />;
+    return (
+        <CustomEdgeWrapper
+            id={props.id} path={edgePath} labelX={labelX} labelY={labelY} selected={props.selected}
+            {...props}
+        />
+    );
 };
 
 export const CustomSmoothStepEdge = (props: EdgeProps<EdgeData>) => {
@@ -257,8 +261,6 @@ export const CustomSmoothStepEdge = (props: EdgeProps<EdgeData>) => {
         labelY = loop.labelY;
     } else {
         const offset = getParallelEdgeOffset(props.id, props.source, props.target, allEdges);
-        // smoothstep handles offset internally via 'offset' param, but that separates the SEGMENTS, not the start/end.
-        // To separate start/end, we must shift the points too.
         const sourceOffset = getOffsetVector(props.sourcePosition, offset);
         const targetOffset = getOffsetVector(props.targetPosition, offset);
 
@@ -269,11 +271,16 @@ export const CustomSmoothStepEdge = (props: EdgeProps<EdgeData>) => {
             targetX: props.targetX + targetOffset.x,
             targetY: props.targetY + targetOffset.y,
             targetPosition: props.targetPosition,
-            offset: 20, // Standard segment offset
+            offset: 20,
         });
     }
 
-    return <CustomEdgeWrapper id={props.id} path={edgePath} labelX={labelX} labelY={labelY} selected={props.selected} {...props} />;
+    return (
+        <CustomEdgeWrapper
+            id={props.id} path={edgePath} labelX={labelX} labelY={labelY} selected={props.selected}
+            {...props}
+        />
+    );
 };
 
 export const CustomStepEdge = (props: EdgeProps<EdgeData>) => {
@@ -304,7 +311,12 @@ export const CustomStepEdge = (props: EdgeProps<EdgeData>) => {
         });
     }
 
-    return <CustomEdgeWrapper id={props.id} path={edgePath} labelX={labelX} labelY={labelY} selected={props.selected} {...props} />;
+    return (
+        <CustomEdgeWrapper
+            id={props.id} path={edgePath} labelX={labelX} labelY={labelY} selected={props.selected}
+            {...props}
+        />
+    );
 };
 
 export default CustomSmoothStepEdge;

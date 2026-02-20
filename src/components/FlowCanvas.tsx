@@ -256,12 +256,6 @@ export const FlowCanvas: React.FC<FlowCanvasProps> = ({
                 onPaneContextMenu={onPaneContextMenu}
                 onSelectionContextMenu={onSelectionContextMenu}
                 onEdgeContextMenu={onEdgeContextMenu}
-                onEdgeDoubleClick={useCallback((_event: React.MouseEvent, _edge: Edge) => {
-                    // Double-click any edge → select all edges
-                    const { setEdges, setNodes } = useFlowStore.getState();
-                    setNodes((nds) => nds.map((n) => ({ ...n, selected: false })));
-                    setEdges((eds) => eds.map((e) => ({ ...e, selected: true })));
-                }, [])}
                 onPaneClick={onPaneClick}
 
                 onConnectStart={onConnectStartWrapper}

@@ -4,6 +4,7 @@ import { useFlowStore } from '@/store';
 import { useAuth } from './useAuth';
 import { FlowTab } from '@/lib/types';
 import { INITIAL_NODES, INITIAL_EDGES } from '@/constants';
+import { assignSmartHandles } from '@/services/smartEdgeRouting';
 
 const FLOW_SAVE_DEBOUNCE = 2000;
 const SETTINGS_SAVE_DEBOUNCE = 2000;
@@ -41,7 +42,9 @@ export const useAutoSave = () => {
                 store.setTabs(tabs);
                 store.setActiveTabId(firstTabId);
                 store.setNodes(tabs[0].nodes);
-                store.setEdges(tabs[0].edges);
+                // Apply smart routing on load to optimize handle sides
+                const smartEdges = assignSmartHandles(tabs[0].nodes, tabs[0].edges);
+                store.setEdges(smartEdges);
                 prevTabIdsRef.current = tabs.map((t) => t.id);
             } else {
                 // No flows in Supabase — check localStorage for migration

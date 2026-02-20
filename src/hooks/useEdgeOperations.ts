@@ -58,12 +58,12 @@ export const useEdgeOperations = (
         if (isDuplicate) return;
 
         recordHistory();
-        setEdges((eds) =>
-            addEdge({
+        setEdges((eds) => {
+            return addEdge({
                 ...params,
                 ...DEFAULT_EDGE_OPTIONS,
-            }, eds)
-        );
+            }, eds);
+        });
     }, [edges, setEdges, recordHistory]);
 
     const onConnectStart = useCallback((_, { nodeId, handleId }: { nodeId: string | null; handleId: string | null }) => {
@@ -153,15 +153,22 @@ export const useEdgeOperations = (
         };
 
         setNodes((nds) => nds.concat(newNode));
-        setEdges((eds) =>
-            eds.concat({
+        setEdges((eds) => {
+            // Pick a target handle that's the opposite of the source handle
+            const oppositeHandle: Record<string, string> = {
+                top: 'bottom', bottom: 'top', left: 'right', right: 'left',
+            };
+            const targetHandle = sourceHandle ? (oppositeHandle[sourceHandle] ?? null) : null;
+
+            return eds.concat({
                 id: `e-${sourceId}-${id}`,
                 source: sourceId,
                 sourceHandle,
                 target: id,
+                targetHandle,
                 ...DEFAULT_EDGE_OPTIONS,
-            })
-        );
+            });
+        });
         setSelectedNodeId(id);
     }, [setNodes, setEdges, recordHistory, setSelectedNodeId]);
 

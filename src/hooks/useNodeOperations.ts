@@ -2,7 +2,6 @@ import { useCallback } from 'react';
 import { Node, useReactFlow } from 'reactflow';
 import { NodeData } from '@/lib/types';
 import { useFlowStore } from '../store';
-import { assignSmartHandles } from '../services/smartEdgeRouting';
 import { NODE_WIDTH, NODE_HEIGHT } from '../constants';
 
 export const useNodeOperations = (recordHistory: () => void) => {
@@ -153,17 +152,11 @@ export const useNodeOperations = (recordHistory: () => void) => {
     }, [recordHistory, setNodes]);
 
     const onNodeDrag = useCallback((_event: React.MouseEvent, _node: Node, draggedNodes: Node[]) => {
-        const { nodes: storeNodes, edges, setEdges, viewSettings, setActiveGuides } = useFlowStore.getState();
+        const { nodes: storeNodes, setActiveGuides } = useFlowStore.getState();
 
         // Merge dragged positions into store nodes
         const draggedNodesMap = new Map(draggedNodes.map(n => [n.id, n]));
         const mergedNodes = storeNodes.map(n => draggedNodesMap.get(n.id) || n);
-
-        // Smart routing
-        if (viewSettings.smartRoutingEnabled) {
-            const smartEdges = assignSmartHandles(mergedNodes, edges);
-            setEdges(smartEdges);
-        }
 
         // Alignment guides
         const THRESHOLD = 8;
@@ -273,14 +266,6 @@ export const useNodeOperations = (recordHistory: () => void) => {
         });
 
         setNodes(updatedNodes);
-
-        // Smart Routing Recalc on Drop
-        const { edges, setEdges, viewSettings } = useFlowStore.getState();
-        if (viewSettings.smartRoutingEnabled) {
-            const smartEdges = assignSmartHandles(updatedNodes, edges);
-            setEdges(smartEdges);
-        }
-
     }, [setNodes]);
 
     const onNodeDoubleClick = useCallback((_event: React.MouseEvent, node: Node) => {

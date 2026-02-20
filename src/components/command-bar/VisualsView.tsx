@@ -1,5 +1,5 @@
 import React from 'react';
-import { Activity, Grid, Network, Zap } from 'lucide-react';
+import { Activity, Grid, Zap } from 'lucide-react';
 import { useFlowStore } from '../../store';
 import { ViewHeader } from './ViewHeader';
 
@@ -8,7 +8,7 @@ interface VisualsViewProps {
 }
 
 export const VisualsView = ({ onBack }: VisualsViewProps) => {
-    const { globalEdgeOptions, setGlobalEdgeOptions, viewSettings, setDefaultIconsEnabled, setSmartRoutingEnabled, brandConfig } = useFlowStore();
+    const { globalEdgeOptions, setGlobalEdgeOptions, viewSettings, setDefaultIconsEnabled, brandConfig } = useFlowStore();
     const isBeveled = brandConfig.ui.buttonStyle === 'beveled';
 
     return (
@@ -57,23 +57,6 @@ export const VisualsView = ({ onBack }: VisualsViewProps) => {
                         className={`w-11 h-6 rounded-full transition-all flex items-center px-0.5 active:scale-90 ${viewSettings.defaultIconsEnabled ? 'bg-[var(--brand-primary)] shadow-inner' : 'bg-slate-200 shadow-inner'}`}
                     >
                         <div className={`w-5 h-5 rounded-full bg-white shadow-sm transition-transform ${isBeveled ? 'border border-black/5 shadow-md' : ''} ${viewSettings.defaultIconsEnabled ? 'translate-x-5' : 'translate-x-0'}`} />
-                    </button>
-                </div>
-
-                {/* Intelligent Routing */}
-                <div className={`flex items-center justify-between p-3 rounded-[var(--radius-md)] border transition-all ${isBeveled ? 'btn-beveled' : 'border-slate-200 bg-white'}`}>
-                    <div className="flex items-center gap-3">
-                        <div className="p-2 bg-slate-100 rounded-[var(--radius-sm)] shadow-inner"><Network className="w-4 h-4 text-emerald-500" /></div>
-                        <div>
-                            <div className="font-medium text-sm text-slate-700">Intelligent Routing</div>
-                            <div className="text-[10px] text-slate-400">Auto-snap connections on drag</div>
-                        </div>
-                    </div>
-                    <button
-                        onClick={() => setSmartRoutingEnabled(!viewSettings.smartRoutingEnabled)}
-                        className={`w-11 h-6 rounded-full transition-all flex items-center px-0.5 active:scale-90 ${viewSettings.smartRoutingEnabled ? 'bg-[var(--brand-primary)] shadow-inner' : 'bg-slate-200 shadow-inner'}`}
-                    >
-                        <div className={`w-5 h-5 rounded-full bg-white shadow-sm transition-transform ${isBeveled ? 'border border-black/5 shadow-md' : ''} ${viewSettings.smartRoutingEnabled ? 'translate-x-5' : 'translate-x-0'}`} />
                     </button>
                 </div>
 
