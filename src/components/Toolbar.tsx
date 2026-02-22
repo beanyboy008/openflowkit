@@ -105,7 +105,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
 
       {/* Group 1: Tools */}
       <div className="flex bg-slate-100/50 p-1 rounded-[var(--radius-md)] gap-0.5 border border-slate-200/60">
-        <Tooltip text="Select Mode (V)">
+        <Tooltip text="Select Mode (A)">
           <Button
             onClick={onToggleSelectMode}
             disabled={!isInteractive}

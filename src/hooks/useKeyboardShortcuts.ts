@@ -83,8 +83,8 @@ export const useKeyboardShortcuts = ({
         }
       }
 
-      // Select Mode (V)
-      if (e.key === 'v' && !isCmdOrCtrl) {
+      // Select Mode (A)
+      if (e.key === 'a' && !isCmdOrCtrl) {
         const tag = (document.activeElement as HTMLElement)?.tagName;
         const isEditable = tag === 'INPUT' || tag === 'TEXTAREA' || (document.activeElement as HTMLElement)?.isContentEditable;
         if (!isEditable) {

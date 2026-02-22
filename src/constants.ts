@@ -8,7 +8,7 @@ export const EDGE_LABEL_BG_STYLE = { fill: '#ffffff', stroke: '#cbd5e1', strokeW
 
 /** Shared edge configuration — use `createDefaultEdge()` for most cases. */
 export const DEFAULT_EDGE_OPTIONS = {
-  type: 'smoothstep' as const,
+  type: 'straight' as const,
   markerEnd: { type: MarkerType.ArrowClosed, width: 20, height: 20 },
   animated: false,
   style: EDGE_STYLE,
@@ -504,7 +504,7 @@ export const KEYBOARD_SHORTCUTS = [
   {
     title: 'Navigation',
     items: [
-      { label: 'Select Mode', keys: ['V'] },
+      { label: 'Select Mode', keys: ['A'] },
       { label: 'Pan Mode', keys: ['H'] },
       { label: 'Pan Canvas', keys: ['Space', 'Drag'] },
       { label: 'Zoom In/Out', keys: ['Cmd', '+/-'] },
