@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { ConnectionLineComponentProps, getStraightPath, useNodes } from 'reactflow';
+import { ConnectionLineComponentProps, getBezierPath, useNodes } from 'reactflow';
 import { Settings } from 'lucide-react';
 import { NODE_WIDTH, NODE_HEIGHT } from '../constants';
 
@@ -34,11 +34,13 @@ const CustomConnectionLine = ({
         });
     }, [nodes, toX, toY]);
 
-    const [edgePath] = getStraightPath({
+    const [edgePath] = getBezierPath({
         sourceX: fromX,
         sourceY: fromY,
+        sourcePosition: fromPosition,
         targetX: toX,
         targetY: toY,
+        targetPosition: toPosition,
     });
 
     return (

@@ -1,5 +1,5 @@
 import React, { useRef } from 'react';
-import { BaseEdge, EdgeLabelRenderer, EdgeProps, getBezierPath, getSmoothStepPath, getStraightPath, useReactFlow, useEdges } from 'reactflow';
+import { BaseEdge, EdgeLabelRenderer, EdgeProps, getBezierPath, getSmoothStepPath, useReactFlow, useEdges } from 'reactflow';
 import { EdgeData } from '@/lib/types';
 
 // --- Parallel edge offset utility ---
@@ -308,38 +308,6 @@ export const CustomStepEdge = (props: EdgeProps<EdgeData>) => {
             targetPosition: props.targetPosition,
             borderRadius: 0,
             offset: 20,
-        });
-    }
-
-    return (
-        <CustomEdgeWrapper
-            id={props.id} path={edgePath} labelX={labelX} labelY={labelY} selected={props.selected}
-            {...props}
-        />
-    );
-};
-
-export const CustomStraightEdge = (props: EdgeProps<EdgeData>) => {
-    const allEdges = useEdges();
-    let edgePath = '';
-    let labelX = 0;
-    let labelY = 0;
-
-    if (props.source === props.target) {
-        const loop = getSelfLoopPath(props.sourceX, props.sourceY, 180, 60, props.sourcePosition as any);
-        edgePath = loop.path;
-        labelX = loop.labelX;
-        labelY = loop.labelY;
-    } else {
-        const offset = getParallelEdgeOffset(props.id, props.source, props.target, allEdges);
-        const sourceOffset = getOffsetVector(props.sourcePosition, offset);
-        const targetOffset = getOffsetVector(props.targetPosition, offset);
-
-        [edgePath, labelX, labelY] = getStraightPath({
-            sourceX: props.sourceX + sourceOffset.x,
-            sourceY: props.sourceY + sourceOffset.y,
-            targetX: props.targetX + targetOffset.x,
-            targetY: props.targetY + targetOffset.y,
         });
     }
 

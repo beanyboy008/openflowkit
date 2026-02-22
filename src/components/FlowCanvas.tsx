@@ -28,7 +28,7 @@ import BrowserNode from './custom-nodes/BrowserNode';
 import MobileNode from './custom-nodes/MobileNode';
 import IconNode from './custom-nodes/IconNode';
 import { WireframeButtonNode, WireframeInputNode, WireframeImageNode, WireframeIconNode } from './custom-nodes/WireframeNodes';
-import { CustomBezierEdge, CustomSmoothStepEdge, CustomStepEdge, CustomStraightEdge } from './CustomEdge';
+import { CustomBezierEdge, CustomSmoothStepEdge, CustomStepEdge } from './CustomEdge';
 import CustomConnectionLine from './CustomConnectionLine';
 import { ConnectMenu } from './ConnectMenu';
 import { ContextMenu, ContextMenuProps } from './ContextMenu';
@@ -71,7 +71,6 @@ const edgeTypes = {
     default: CustomBezierEdge,
     smoothstep: CustomSmoothStepEdge,
     step: CustomStepEdge,
-    straight: CustomStraightEdge,
 };
 
 export const FlowCanvas: React.FC<FlowCanvasProps> = ({
