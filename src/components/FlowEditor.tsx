@@ -280,7 +280,7 @@ export function FlowEditor({ onGoHome }: FlowEditorProps) {
     const selectedEdge = useMemo(() => edges.find((e) => e.id === selectedEdgeId) || null, [edges, selectedEdgeId]);
 
     // Selection Mode
-    const [isSelectMode, setIsSelectMode] = useState(false);
+    const [isSelectMode, setIsSelectMode] = useState(true);
 
     return (
         <div className="w-full h-screen bg-[var(--brand-background)] flex flex-col relative" ref={reactFlowWrapper}>
