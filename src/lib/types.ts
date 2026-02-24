@@ -35,8 +35,9 @@ export interface NodeData {
   variant?: string; // wireframe preset key (e.g. 'landing', 'modal')
   autoFocusLabel?: boolean; // Transient: auto-enter edit mode on creation
   link?: string; // URL that opens in new tab when clicked
-  attachmentUrl?: string; // Supabase Storage URL for attached file
-  attachmentName?: string; // Original filename of attachment
+  attachmentUrl?: string; // Legacy single attachment (kept for backward compat)
+  attachmentName?: string; // Legacy single attachment name
+  attachments?: Array<{ url: string; name: string }>; // Multiple file attachments
   isCheckbox?: boolean; // Whether node acts as a checkbox
   checked?: boolean; // Checkbox state
 }

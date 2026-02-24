@@ -73,11 +73,13 @@ const CustomNode = ({ id, data, type, selected }: NodeProps<NodeData>) => {
     if (data.link) window.open(data.link, '_blank', 'noopener,noreferrer');
   }, [data.link]);
 
-  const handleAttachmentClick = useCallback((e: React.MouseEvent) => {
-    e.stopPropagation();
-    e.preventDefault();
-    if (data.attachmentUrl) window.open(data.attachmentUrl, '_blank', 'noopener,noreferrer');
-  }, [data.attachmentUrl]);
+  // Merge legacy single attachment + new attachments array
+  const allAttachments = useMemo(() => {
+    const list: Array<{ url: string; name: string }> = [];
+    if (data.attachmentUrl) list.push({ url: data.attachmentUrl, name: data.attachmentName || 'Attachment' });
+    if (data.attachments) list.push(...data.attachments);
+    return list;
+  }, [data.attachmentUrl, data.attachmentName, data.attachments]);
 
   const handleLabelKeyDown = useCallback((e: React.KeyboardEvent) => {
     e.stopPropagation();
@@ -410,18 +412,19 @@ const CustomNode = ({ id, data, type, selected }: NodeProps<NodeData>) => {
               </div>
             )}
 
-            {/* Attached File */}
-            {data.attachmentUrl && (
+            {/* Attached Files */}
+            {allAttachments.map((att, i) => (
               <div
+                key={i}
                 className="flex items-center gap-1 mt-1.5 cursor-pointer group/attachment"
-                onClick={handleAttachmentClick}
+                onClick={(e) => { e.stopPropagation(); e.preventDefault(); window.open(att.url, '_blank', 'noopener,noreferrer'); }}
               >
                 <FileText className="w-3 h-3 text-rose-400 shrink-0" />
                 <span className="text-[11px] text-rose-500 hover:text-rose-700 group-hover/attachment:underline truncate max-w-[180px]">
-                  {data.attachmentName || 'Attachment'}
+                  {att.name}
                 </span>
               </div>
-            )}
+            ))}
           </div>
 
           {/* Image */}

@@ -176,13 +176,13 @@ export const FlowCanvas: React.FC<FlowCanvasProps> = ({
                 if (!result) return;
 
                 if (targetNode) {
-                    // Attach to existing node
+                    // Append to existing node's attachments
                     setNodes((nds) =>
-                        nds.map((n) =>
-                            n.id === targetNode.id
-                                ? { ...n, data: { ...n.data, attachmentUrl: result.url, attachmentName: result.name } }
-                                : n
-                        )
+                        nds.map((n) => {
+                            if (n.id !== targetNode.id) return n;
+                            const existing = n.data.attachments || [];
+                            return { ...n, data: { ...n.data, attachments: [...existing, { url: result.url, name: result.name }] } };
+                        })
                     );
                 } else {
                     // Create new node with attachment
@@ -192,11 +192,10 @@ export const FlowCanvas: React.FC<FlowCanvasProps> = ({
                             id,
                             position,
                             data: {
-                                label: result.name.replace(/\.pdf$/i, ''),
+                                label: result.name.replace(/\.[^.]+$/, ''),
                                 subLabel: '',
                                 color: 'slate',
-                                attachmentUrl: result.url,
-                                attachmentName: result.name,
+                                attachments: [{ url: result.url, name: result.name }],
                             },
                             type: 'process',
                         })
