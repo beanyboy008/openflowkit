@@ -30,12 +30,14 @@ const CustomNode = ({ id, data, type, selected }: NodeProps<NodeData>) => {
   const [subLabelDraft, setSubLabelDraft] = useState(data.subLabel || '');
   const labelRef = useRef<HTMLTextAreaElement>(null);
   const subLabelRef = useRef<HTMLTextAreaElement>(null);
+  const isAutoFocusing = useRef(false);
 
   // Sync drafts when data changes externally
   useEffect(() => { setLabelDraft(data.label || ''); }, [data.label]);
   useEffect(() => { setSubLabelDraft(data.subLabel || ''); }, [data.subLabel]);
 
   const commitLabel = useCallback(() => {
+    if (isAutoFocusing.current) return;
     setEditingLabel(false);
     setNodes((nodes) => nodes.map((n) =>
       n.id === id ? { ...n, data: { ...n.data, label: labelDraft } } : n
@@ -80,16 +82,18 @@ const CustomNode = ({ id, data, type, selected }: NodeProps<NodeData>) => {
 
   useEffect(() => {
     if (editingLabel) {
-      // Retry focus until it sticks — React Flow aggressively steals focus to the canvas pane
+      // Retry focus until it sticks — React Flow steals focus, which triggers onBlur→commitLabel.
+      // isAutoFocusing prevents commitLabel from removing the textarea during this window.
       const interval = setInterval(() => {
         if (labelRef.current) {
           labelRef.current.focus();
           if (document.activeElement === labelRef.current) {
+            isAutoFocusing.current = false;
             clearInterval(interval);
           }
         }
       }, 30);
-      const timeout = setTimeout(() => clearInterval(interval), 500);
+      const timeout = setTimeout(() => { isAutoFocusing.current = false; clearInterval(interval); }, 500);
       return () => { clearInterval(interval); clearTimeout(timeout); };
     }
   }, [editingLabel]);
@@ -101,6 +105,7 @@ const CustomNode = ({ id, data, type, selected }: NodeProps<NodeData>) => {
   // Auto-focus label on creation (N key)
   useEffect(() => {
     if (data.autoFocusLabel) {
+      isAutoFocusing.current = true;
       setEditingLabel(true);
       setNodes((nodes) => nodes.map((n) =>
         n.id === id ? { ...n, data: { ...n.data, autoFocusLabel: undefined } } : n
