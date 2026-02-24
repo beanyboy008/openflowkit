@@ -381,15 +381,7 @@ const CustomNode = ({ id, data, type, selected }: NodeProps<NodeData>) => {
               >
                 <MemoizedMarkdown content={data.subLabel} />
               </div>
-            ) : (
-              <div
-                className="text-xs text-slate-400 mt-1 cursor-text italic"
-                onMouseDown={stopMousePropagation}
-                onClick={(e) => { if (e.shiftKey) return; e.stopPropagation(); setSubLabelDraft(''); setEditingSubLabel(true); }}
-              >
-                Click to add details
-              </div>
-            )}
+            ) : null}
               </div>{/* close checkbox flex-1 wrapper */}
             </div>{/* close checkbox + label row */}
 
