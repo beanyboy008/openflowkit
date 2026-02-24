@@ -80,7 +80,7 @@ export const useEdgeOperations = (
             data: {
                 label: autoFocus ? '' : (type === 'annotation' ? 'Note' : (shape === 'cylinder' ? 'Database' : shape === 'parallelogram' ? 'Input / Output' : 'New Node')),
                 subLabel: autoFocus ? '' : (type === 'decision' ? 'Branch' : 'Process Step'),
-                icon: type === 'decision' ? 'GitBranch' : (type === 'annotation' ? 'StickyNote' : (shape === 'cylinder' ? 'Database' : 'Settings')),
+                icon: type === 'decision' ? 'GitBranch' : (type === 'annotation' ? 'StickyNote' : (shape === 'cylinder' ? 'Database' : 'none')),
                 color: type === 'annotation' ? 'yellow' : (type === 'decision' ? 'amber' : (shape === 'cylinder' ? 'emerald' : 'slate')),
                 ...(shape ? { shape } : {}),
                 ...(autoFocus ? { autoFocusLabel: true } : {}),

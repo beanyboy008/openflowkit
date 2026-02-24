@@ -135,7 +135,7 @@ const CustomNode = ({ id, data, type, selected }: NodeProps<NodeData>) => {
     if (exactMatch) return exactMatch;
     const keyLower = activeIconKey.toLowerCase();
     const foundKey = Object.keys(ICON_MAP).find(k => k.toLowerCase() === keyLower);
-    return foundKey ? ICON_MAP[foundKey] : ICON_MAP.Settings;
+    return foundKey ? ICON_MAP[foundKey] : null;
   }, [activeIconKey, data.customIconUrl]);
 
   // Typography
