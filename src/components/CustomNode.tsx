@@ -79,7 +79,13 @@ const CustomNode = ({ id, data, type, selected }: NodeProps<NodeData>) => {
   }, [commitSubLabel, data.subLabel]);
 
   useEffect(() => {
-    if (editingLabel && labelRef.current) { labelRef.current.focus(); labelRef.current.select(); }
+    if (editingLabel) {
+      // Use rAF to ensure focus happens after React Flow's internal focus management
+      requestAnimationFrame(() => {
+        labelRef.current?.focus();
+        labelRef.current?.select();
+      });
+    }
   }, [editingLabel]);
 
   useEffect(() => {

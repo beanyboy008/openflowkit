@@ -183,6 +183,7 @@ interface FlowState {
     setActiveTabId: (id: string) => void;
     setTabs: (tabs: FlowTab[]) => void;
     addTab: () => string;
+    addTabFromData: (tab: FlowTab) => string;
     closeTab: (id: string) => void;
     updateTab: (id: string, updates: Partial<FlowTab>) => void;
 
@@ -366,6 +367,20 @@ export const useFlowStore = create<FlowState>()(
                     edges: newTab.edges,
                 });
                 return newTabId;
+            },
+
+            addTabFromData: (tab) => {
+                const { tabs, activeTabId } = get();
+                const updatedTabs = tabs.map(t =>
+                    t.id === activeTabId ? { ...t, nodes: get().nodes, edges: get().edges } : t
+                );
+                set({
+                    tabs: [...updatedTabs, tab],
+                    activeTabId: tab.id,
+                    nodes: tab.nodes,
+                    edges: tab.edges,
+                });
+                return tab.id;
             },
 
             closeTab: (id) => {

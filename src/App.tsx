@@ -9,6 +9,7 @@ import { useFlowStore } from './store';
 import { useBrandTheme } from './hooks/useBrandTheme';
 import { useAuth } from './hooks/useAuth';
 import { useAutoSave } from './hooks/useAutoSave';
+import { supabase } from '@/lib/supabase';
 
 import { FlowEditor } from './components/FlowEditor';
 import { HomePage } from './components/HomePage';
@@ -38,8 +39,26 @@ function FlowCanvasRoute(): React.JSX.Element {
   const { setActiveTabId } = useFlowStore();
 
   useEffect(() => {
-    if (flowId) {
+    if (!flowId) return;
+    const { tabs } = useFlowStore.getState();
+    const exists = tabs.some(t => t.id === flowId);
+    if (exists) {
       setActiveTabId(flowId);
+    } else {
+      // Flow not in tabs — fetch from Supabase and add as tab
+      supabase.from('flows').select('*').eq('id', flowId).single()
+        .then(({ data }) => {
+          if (data && !data.archived_at) {
+            const tab = {
+              id: data.id,
+              name: data.name,
+              nodes: data.nodes || [],
+              edges: data.edges || [],
+              history: { past: [], future: [] },
+            };
+            useFlowStore.getState().addTabFromData(tab);
+          }
+        });
     }
   }, [flowId, setActiveTabId]);
 

@@ -1,18 +1,20 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { OpenFlowLogo } from './icons/OpenFlowLogo';
 import {
     Settings, Layout, Command, Search,
     Home, Clock, Loader2, Plus, Import, Image, FileCode, FileJson, GitBranch, Book, ExternalLink, Trash2,
-    Sparkles, ArrowUp, Workflow
+    Sparkles, ArrowUp, Workflow, MoreHorizontal, Copy, Archive, ArchiveRestore, ChevronDown
 } from 'lucide-react';
 import { useFlowStore } from '../store';
 import { useSnapshots } from '../hooks/useSnapshots';
+import { useAuth } from '../hooks/useAuth';
+import { supabase } from '@/lib/supabase';
 import { Button } from './ui/Button';
 import { BrandSettings } from './SettingsModal/BrandSettings';
 import { GeneralSettings } from './SettingsModal/GeneralSettings';
 import { ShortcutsSettings } from './SettingsModal/ShortcutsSettings';
 import { PrivacySettings } from './SettingsModal/PrivacySettings';
-import { FlowSnapshot } from '@/lib/types';
+import { FlowSnapshot, FlowNode, FlowEdge } from '@/lib/types';
 import { SidebarItem } from './ui/SidebarItem';
 import { WelcomeModal } from './WelcomeModal';
 import { trackEvent } from '../lib/analytics';
@@ -28,6 +30,14 @@ interface HomePageProps {
     onSwitchTab?: (tab: 'home' | 'settings') => void;
 }
 
+type SupabaseFlow = {
+    id: string;
+    name: string;
+    nodes: FlowNode[];
+    edges: FlowEdge[];
+    archived_at: string | null;
+};
+
 export const HomePage: React.FC<HomePageProps> = ({
     onLaunch,
     onImportJSON,
@@ -38,11 +48,42 @@ export const HomePage: React.FC<HomePageProps> = ({
     onSwitchTab
 }) => {
     const { brandConfig, tabs } = useFlowStore();
+    const { user } = useAuth();
     const { snapshots, deleteSnapshot } = useSnapshots();
     const [internalActiveTab, setInternalActiveTab] = useState<'home' | 'settings'>('home');
     const [activeSettingsTab, setActiveSettingsTab] = useState<'brand' | 'general' | 'shortcuts' | 'privacy'>('brand');
+    const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+    const [activeFlows, setActiveFlows] = useState<SupabaseFlow[]>([]);
+    const [archivedFlows, setArchivedFlows] = useState<SupabaseFlow[]>([]);
+    const [showArchived, setShowArchived] = useState(false);
+    const menuRef = useRef<HTMLDivElement>(null);
 
     const activeTab = propActiveTab || internalActiveTab;
+
+    const fetchFlows = useCallback(async () => {
+        if (!user) return;
+        const [activeResult, archivedResult] = await Promise.all([
+            supabase.from('flows').select('id, name, nodes, edges, archived_at').eq('user_id', user.id).is('archived_at', null).order('created_at'),
+            supabase.from('flows').select('id, name, nodes, edges, archived_at').eq('user_id', user.id).not('archived_at', 'is', null).order('created_at'),
+        ]);
+        if (activeResult.data) setActiveFlows(activeResult.data);
+        if (archivedResult.data) setArchivedFlows(archivedResult.data);
+    }, [user]);
+
+    useEffect(() => {
+        fetchFlows();
+    }, [fetchFlows, tabs]);
+
+    // Close menu on outside click
+    useEffect(() => {
+        const handleClick = (e: MouseEvent) => {
+            if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+                setOpenMenuId(null);
+            }
+        };
+        document.addEventListener('mousedown', handleClick);
+        return () => document.removeEventListener('mousedown', handleClick);
+    }, []);
 
     const handleTabChange = (tab: 'home' | 'settings') => {
         if (onSwitchTab) {
@@ -56,6 +97,63 @@ export const HomePage: React.FC<HomePageProps> = ({
         trackEvent('restore_snapshot_flow');
         onRestoreSnapshot(snapshot);
         onLaunch(); // Enter editor
+    };
+
+    const handleDuplicateFlow = async (flow: SupabaseFlow) => {
+        if (!user) return;
+        const newId = crypto.randomUUID();
+
+        // Deep-copy nodes with new IDs, remap edges
+        const idMap = new Map<string, string>();
+        const newNodes = (flow.nodes || []).map(node => {
+            const newNodeId = crypto.randomUUID();
+            idMap.set(node.id, newNodeId);
+            return { ...node, id: newNodeId };
+        });
+        const newEdges = (flow.edges || []).map(edge => ({
+            ...edge,
+            id: crypto.randomUUID(),
+            source: idMap.get(edge.source) || edge.source,
+            target: idMap.get(edge.target) || edge.target,
+        }));
+
+        const { error } = await supabase.from('flows').insert({
+            id: newId,
+            user_id: user.id,
+            name: `${flow.name} (Copy)`,
+            nodes: newNodes,
+            edges: newEdges,
+        });
+
+        if (!error) {
+            const tab = {
+                id: newId,
+                name: `${flow.name} (Copy)`,
+                nodes: newNodes,
+                edges: newEdges,
+                history: { past: [], future: [] },
+            };
+            useFlowStore.getState().addTabFromData(tab);
+            setOpenMenuId(null);
+            onOpenFlow(newId);
+        }
+    };
+
+    const handleArchiveFlow = async (flowId: string) => {
+        await supabase.from('flows').update({ archived_at: new Date().toISOString() }).eq('id', flowId);
+        // Remove from tabs if currently open
+        const { tabs } = useFlowStore.getState();
+        if (tabs.some(t => t.id === flowId) && tabs.length > 1) {
+            useFlowStore.getState().closeTab(flowId);
+        }
+        setOpenMenuId(null);
+        fetchFlows();
+    };
+
+    const handleRestoreFlow = async (flowId: string) => {
+        await supabase.from('flows').update({ archived_at: null }).eq('id', flowId);
+        setOpenMenuId(null);
+        fetchFlows();
     };
 
     return (
@@ -158,11 +256,11 @@ export const HomePage: React.FC<HomePageProps> = ({
                             </div>
                         </div>
 
-                        {/* Saved Flows (Tabs) */}
+                        {/* Active Flows */}
                         <section className="mb-12">
                             <div className="flex items-center justify-between mb-6">
                                 <h2 className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Flows</h2>
-                                <span className="text-xs text-slate-400">{tabs.length} {tabs.length === 1 ? 'flow' : 'flows'}</span>
+                                <span className="text-xs text-slate-400">{activeFlows.length} {activeFlows.length === 1 ? 'flow' : 'flows'}</span>
                             </div>
 
                             <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-4 gap-6">
@@ -178,28 +276,116 @@ export const HomePage: React.FC<HomePageProps> = ({
                                 </div>
 
                                 {/* Existing Flow Cards */}
-                                {tabs.map(tab => (
+                                {activeFlows.map(flow => (
                                     <div
-                                        key={tab.id}
-                                        onClick={() => onOpenFlow(tab.id)}
+                                        key={flow.id}
+                                        onClick={() => onOpenFlow(flow.id)}
                                         className="group bg-[var(--brand-surface)] rounded-lg border border-slate-200 overflow-hidden cursor-pointer hover:border-slate-300 hover:shadow-sm transition-all relative"
                                     >
                                         <div className="h-32 bg-slate-50 flex items-center justify-center border-b border-slate-100 relative overflow-hidden">
                                             <div className="w-10 h-10 rounded-lg bg-[var(--brand-surface)] shadow-sm border border-slate-100 flex items-center justify-center text-slate-300 group-hover:text-[var(--brand-primary)] group-hover:border-[var(--brand-primary-200)] transition-colors z-10">
                                                 <Workflow className="w-5 h-5" />
                                             </div>
+
+                                            {/* Action menu button */}
+                                            <div className="absolute top-2 right-2 z-20" ref={openMenuId === flow.id ? menuRef : undefined}>
+                                                <button
+                                                    onClick={(e) => { e.stopPropagation(); setOpenMenuId(openMenuId === flow.id ? null : flow.id); }}
+                                                    className="p-1.5 bg-[var(--brand-surface)] text-slate-400 hover:text-slate-600 border border-slate-200 rounded-md opacity-0 group-hover:opacity-100 transition-all"
+                                                >
+                                                    <MoreHorizontal className="w-3.5 h-3.5" />
+                                                </button>
+
+                                                {openMenuId === flow.id && (
+                                                    <div className="absolute right-0 top-full mt-1 w-40 bg-white rounded-lg border border-slate-200 shadow-lg py-1 z-30">
+                                                        <button
+                                                            onClick={(e) => { e.stopPropagation(); handleDuplicateFlow(flow); }}
+                                                            className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors"
+                                                        >
+                                                            <Copy className="w-3.5 h-3.5" />
+                                                            Duplicate
+                                                        </button>
+                                                        <button
+                                                            onClick={(e) => { e.stopPropagation(); handleArchiveFlow(flow.id); }}
+                                                            className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors"
+                                                        >
+                                                            <Archive className="w-3.5 h-3.5" />
+                                                            Archive
+                                                        </button>
+                                                    </div>
+                                                )}
+                                            </div>
                                         </div>
                                         <div className="p-3">
-                                            <h3 className="font-medium text-slate-900 text-sm truncate mb-1 group-hover:text-[var(--brand-primary)] transition-colors">{tab.name}</h3>
+                                            <h3 className="font-medium text-slate-900 text-sm truncate mb-1 group-hover:text-[var(--brand-primary)] transition-colors">{flow.name}</h3>
                                             <div className="flex items-center justify-between text-[11px] text-[var(--brand-secondary)]">
-                                                <span>{tab.nodes.length} {tab.nodes.length === 1 ? 'node' : 'nodes'}</span>
-                                                <span>{tab.edges.length} {tab.edges.length === 1 ? 'edge' : 'edges'}</span>
+                                                <span>{(flow.nodes || []).length} {(flow.nodes || []).length === 1 ? 'node' : 'nodes'}</span>
+                                                <span>{(flow.edges || []).length} {(flow.edges || []).length === 1 ? 'edge' : 'edges'}</span>
                                             </div>
                                         </div>
                                     </div>
                                 ))}
                             </div>
                         </section>
+
+                        {/* Archived Flows */}
+                        {archivedFlows.length > 0 && (
+                            <section className="mb-12">
+                                <button
+                                    onClick={() => setShowArchived(!showArchived)}
+                                    className="flex items-center gap-2 mb-6 group"
+                                >
+                                    <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform ${showArchived ? '' : '-rotate-90'}`} />
+                                    <h2 className="text-xs font-semibold text-slate-400 uppercase tracking-wider group-hover:text-slate-500 transition-colors">Archived</h2>
+                                    <span className="text-xs text-slate-400">{archivedFlows.length}</span>
+                                </button>
+
+                                {showArchived && (
+                                    <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-4 gap-6">
+                                        {archivedFlows.map(flow => (
+                                            <div
+                                                key={flow.id}
+                                                className="group bg-[var(--brand-surface)] rounded-lg border border-slate-200 overflow-hidden relative opacity-60 hover:opacity-100 transition-all"
+                                            >
+                                                <div className="h-32 bg-slate-50 flex items-center justify-center border-b border-slate-100 relative overflow-hidden">
+                                                    <div className="w-10 h-10 rounded-lg bg-[var(--brand-surface)] shadow-sm border border-slate-100 flex items-center justify-center text-slate-300 z-10">
+                                                        <Archive className="w-5 h-5" />
+                                                    </div>
+
+                                                    <div className="absolute top-2 right-2 z-20" ref={openMenuId === flow.id ? menuRef : undefined}>
+                                                        <button
+                                                            onClick={(e) => { e.stopPropagation(); setOpenMenuId(openMenuId === flow.id ? null : flow.id); }}
+                                                            className="p-1.5 bg-[var(--brand-surface)] text-slate-400 hover:text-slate-600 border border-slate-200 rounded-md opacity-0 group-hover:opacity-100 transition-all"
+                                                        >
+                                                            <MoreHorizontal className="w-3.5 h-3.5" />
+                                                        </button>
+
+                                                        {openMenuId === flow.id && (
+                                                            <div className="absolute right-0 top-full mt-1 w-40 bg-white rounded-lg border border-slate-200 shadow-lg py-1 z-30">
+                                                                <button
+                                                                    onClick={(e) => { e.stopPropagation(); handleRestoreFlow(flow.id); }}
+                                                                    className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors"
+                                                                >
+                                                                    <ArchiveRestore className="w-3.5 h-3.5" />
+                                                                    Restore
+                                                                </button>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                                <div className="p-3">
+                                                    <h3 className="font-medium text-slate-500 text-sm truncate mb-1">{flow.name}</h3>
+                                                    <div className="flex items-center justify-between text-[11px] text-slate-400">
+                                                        <span>{(flow.nodes || []).length} nodes</span>
+                                                        <span>{(flow.edges || []).length} edges</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </section>
+                        )}
 
                         {/* Snapshots */}
                         {snapshots.length > 0 && (

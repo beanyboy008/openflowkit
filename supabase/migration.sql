@@ -30,3 +30,8 @@ create table user_settings (
 alter table user_settings enable row level security;
 create policy "Users can CRUD own settings" on user_settings
   for all using (auth.uid() = user_id);
+
+-- Add archived_at column for soft-delete (archive) support
+-- Flows with archived_at IS NULL are active; flows with a timestamp are archived.
+-- Run this migration separately if the flows table already exists:
+-- ALTER TABLE flows ADD COLUMN archived_at timestamptz DEFAULT NULL;

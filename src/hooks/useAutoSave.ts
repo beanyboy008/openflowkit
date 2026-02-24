@@ -24,7 +24,7 @@ export const useAutoSave = () => {
         try {
             // Load flows and settings in parallel
             const [flowsResult, settingsResult] = await Promise.all([
-                supabase.from('flows').select('*').eq('user_id', userId).order('created_at'),
+                supabase.from('flows').select('*').eq('user_id', userId).is('archived_at', null).order('created_at'),
                 supabase.from('user_settings').select('*').eq('user_id', userId).maybeSingle(),
             ]);
 
@@ -120,12 +120,6 @@ export const useAutoSave = () => {
             const state = useFlowStore.getState();
             const currentTabIds = state.tabs.map((t) => t.id);
             const prevIds = prevTabIdsRef.current;
-
-            // Detect removed tabs → delete from Supabase
-            const removedIds = prevIds.filter((id) => !currentTabIds.includes(id));
-            if (removedIds.length > 0) {
-                await supabase.from('flows').delete().in('id', removedIds);
-            }
 
             // Detect added tabs → insert to Supabase
             const addedIds = currentTabIds.filter((id) => !prevIds.includes(id));
