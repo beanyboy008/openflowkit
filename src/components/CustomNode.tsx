@@ -80,11 +80,12 @@ const CustomNode = ({ id, data, type, selected }: NodeProps<NodeData>) => {
 
   useEffect(() => {
     if (editingLabel) {
-      // Use rAF to ensure focus happens after React Flow's internal focus management
-      requestAnimationFrame(() => {
+      // setTimeout to ensure focus happens after React Flow's internal focus management
+      const timer = setTimeout(() => {
         labelRef.current?.focus();
         labelRef.current?.select();
-      });
+      }, 50);
+      return () => clearTimeout(timer);
     }
   }, [editingLabel]);
 
