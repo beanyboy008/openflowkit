@@ -35,6 +35,8 @@ export interface NodeData {
   variant?: string; // wireframe preset key (e.g. 'landing', 'modal')
   autoFocusLabel?: boolean; // Transient: auto-enter edit mode on creation
   link?: string; // URL that opens in new tab when clicked
+  attachmentUrl?: string; // Supabase Storage URL for attached file
+  attachmentName?: string; // Original filename of attachment
   isCheckbox?: boolean; // Whether node acts as a checkbox
   checked?: boolean; // Checkbox state
 }

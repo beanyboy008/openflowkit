@@ -1,7 +1,7 @@
 import React, { memo, useMemo, useState, useCallback, useRef, useEffect } from 'react';
 import { Handle, Position, NodeProps, NodeResizer } from 'reactflow';
 import { NodeData } from '@/lib/types';
-import { ExternalLink, Check } from 'lucide-react';
+import { ExternalLink, Check, FileText } from 'lucide-react';
 
 import { ICON_MAP } from './IconMap';
 import MemoizedMarkdown from './MemoizedMarkdown';
@@ -72,6 +72,12 @@ const CustomNode = ({ id, data, type, selected }: NodeProps<NodeData>) => {
     e.preventDefault();
     if (data.link) window.open(data.link, '_blank', 'noopener,noreferrer');
   }, [data.link]);
+
+  const handleAttachmentClick = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    if (data.attachmentUrl) window.open(data.attachmentUrl, '_blank', 'noopener,noreferrer');
+  }, [data.attachmentUrl]);
 
   const handleLabelKeyDown = useCallback((e: React.KeyboardEvent) => {
     e.stopPropagation();
@@ -394,6 +400,19 @@ const CustomNode = ({ id, data, type, selected }: NodeProps<NodeData>) => {
                 <ExternalLink className="w-3 h-3 text-indigo-400 shrink-0" />
                 <span className="text-[11px] text-indigo-500 hover:text-indigo-700 group-hover/link:underline truncate max-w-[180px]">
                   {data.link.replace(/^https?:\/\/(www\.)?/, '').slice(0, 40)}
+                </span>
+              </div>
+            )}
+
+            {/* Attached File */}
+            {data.attachmentUrl && (
+              <div
+                className="flex items-center gap-1 mt-1.5 cursor-pointer group/attachment"
+                onClick={handleAttachmentClick}
+              >
+                <FileText className="w-3 h-3 text-rose-400 shrink-0" />
+                <span className="text-[11px] text-rose-500 hover:text-rose-700 group-hover/attachment:underline truncate max-w-[180px]">
+                  {data.attachmentName || 'Attachment'}
                 </span>
               </div>
             )}

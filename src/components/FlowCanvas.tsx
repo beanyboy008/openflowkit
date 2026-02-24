@@ -33,6 +33,8 @@ import { ContextMenu, ContextMenuProps } from './ContextMenu';
 import { NavigationControls } from './NavigationControls';
 import { AlignmentGuides } from './AlignmentGuides';
 import { MINIMAP_NODE_COLORS, NODE_WIDTH, NODE_HEIGHT } from '../constants';
+import { uploadAttachment } from '@/lib/supabase';
+import { useAuth } from '@/hooks/useAuth';
 
 interface FlowCanvasProps {
     undo: () => void;
@@ -82,8 +84,10 @@ export const FlowCanvas: React.FC<FlowCanvasProps> = ({
         onNodesChange, onEdgesChange,
         selectedNodeId, selectedEdgeId,
         viewSettings: { showGrid, snapToGrid, showMiniMap },
-        setSelectedNodeId // Used by context menu? No, operations handle it
+        setSelectedNodeId, setNodes
     } = useFlowStore();
+
+    const { user } = useAuth();
 
     const { fitView } = useReactFlow();
     const reactFlowWrapper = useRef<HTMLDivElement>(null);
@@ -121,11 +125,14 @@ export const FlowCanvas: React.FC<FlowCanvasProps> = ({
     }, []);
 
     const onDrop = useCallback(
-        (event: React.DragEvent) => {
+        async (event: React.DragEvent) => {
             event.preventDefault();
 
             const file = event.dataTransfer.files?.[0];
-            if (file && file.type.startsWith('image/')) {
+            if (!file) return;
+
+            // Image drop → create image node (existing behavior)
+            if (file.type.startsWith('image/')) {
                 const reader = new FileReader();
                 reader.onload = (e) => {
                     const imageUrl = e.target?.result as string;
@@ -138,9 +145,61 @@ export const FlowCanvas: React.FC<FlowCanvasProps> = ({
                     }
                 };
                 reader.readAsDataURL(file);
+                return;
+            }
+
+            // PDF drop → attach to node under cursor, or create new node
+            if (file.type === 'application/pdf' && user) {
+                const position = screenToFlowPosition({
+                    x: event.clientX,
+                    y: event.clientY,
+                });
+
+                // Find node under drop point
+                const targetNode = nodes.find((n) => {
+                    const w = n.width || NODE_WIDTH;
+                    const h = n.height || NODE_HEIGHT;
+                    return (
+                        position.x >= n.position.x &&
+                        position.x <= n.position.x + w &&
+                        position.y >= n.position.y &&
+                        position.y <= n.position.y + h
+                    );
+                });
+
+                const result = await uploadAttachment(file, user.id);
+                if (!result) return;
+
+                if (targetNode) {
+                    // Attach to existing node
+                    setNodes((nds) =>
+                        nds.map((n) =>
+                            n.id === targetNode.id
+                                ? { ...n, data: { ...n.data, attachmentUrl: result.url, attachmentName: result.name } }
+                                : n
+                        )
+                    );
+                } else {
+                    // Create new node with attachment
+                    const id = `${Date.now()}`;
+                    setNodes((nds) =>
+                        nds.concat({
+                            id,
+                            position,
+                            data: {
+                                label: result.name.replace(/\.pdf$/i, ''),
+                                subLabel: '',
+                                color: 'slate',
+                                attachmentUrl: result.url,
+                                attachmentName: result.name,
+                            },
+                            type: 'process',
+                        })
+                    );
+                }
             }
         },
-        [screenToFlowPosition, handleAddImage]
+        [screenToFlowPosition, handleAddImage, user, nodes, setNodes]
     );
 
     // --- Keyboard Shortcuts ---
