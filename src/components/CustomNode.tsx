@@ -80,12 +80,17 @@ const CustomNode = ({ id, data, type, selected }: NodeProps<NodeData>) => {
 
   useEffect(() => {
     if (editingLabel) {
-      // setTimeout to ensure focus happens after React Flow's internal focus management
-      const timer = setTimeout(() => {
-        labelRef.current?.focus();
-        labelRef.current?.select();
-      }, 50);
-      return () => clearTimeout(timer);
+      // Retry focus until it sticks — React Flow aggressively steals focus to the canvas pane
+      const interval = setInterval(() => {
+        if (labelRef.current) {
+          labelRef.current.focus();
+          if (document.activeElement === labelRef.current) {
+            clearInterval(interval);
+          }
+        }
+      }, 30);
+      const timeout = setTimeout(() => clearInterval(interval), 500);
+      return () => { clearInterval(interval); clearTimeout(timeout); };
     }
   }, [editingLabel]);
 
