@@ -12,7 +12,6 @@ import ReactFlow, {
     ConnectionMode
 } from 'reactflow';
 import { useFlowStore } from '../store';
-import { NodeData } from '../lib/types';
 import { useFlowOperations } from '../hooks/useFlowOperations';
 import { useModifierKeys } from '../hooks/useModifierKeys';
 import { useEdgeInteractions } from '../hooks/useEdgeInteractions';
@@ -30,7 +29,6 @@ import IconNode from './custom-nodes/IconNode';
 import { WireframeButtonNode, WireframeInputNode, WireframeImageNode, WireframeIconNode } from './custom-nodes/WireframeNodes';
 import { CustomBezierEdge, CustomSmoothStepEdge, CustomStepEdge } from './CustomEdge';
 import CustomConnectionLine from './CustomConnectionLine';
-import { ConnectMenu } from './ConnectMenu';
 import { ContextMenu, ContextMenuProps } from './ContextMenu';
 import { NavigationControls } from './NavigationControls';
 import { AlignmentGuides } from './AlignmentGuides';
@@ -90,9 +88,6 @@ export const FlowCanvas: React.FC<FlowCanvasProps> = ({
     const { fitView } = useReactFlow();
     const reactFlowWrapper = useRef<HTMLDivElement>(null);
 
-    // --- Connection Menu State ---
-    const [connectMenu, setConnectMenu] = useState<{ position: { x: number; y: number }, sourceId: string, sourceHandle: string | null } | null>(null);
-
     // --- Context Menu State ---
     const [contextMenu, setContextMenu] = useState<ContextMenuProps & { isOpen: boolean }>({
         id: null,
@@ -117,10 +112,7 @@ export const FlowCanvas: React.FC<FlowCanvasProps> = ({
         onEdgeUpdate,
         onNodeDrag,
         handleAddImage
-    } = useFlowOperations(
-        recordHistory,
-        (position, sourceId, sourceHandle) => setConnectMenu({ position, sourceId, sourceHandle })
-    );
+    } = useFlowOperations(recordHistory);
 
     // --- Drag & Drop ---
     const onDragOver = useCallback((event: React.DragEvent) => {
@@ -301,18 +293,6 @@ export const FlowCanvas: React.FC<FlowCanvasProps> = ({
             </ReactFlow>
             <AlignmentGuides />
 
-            {connectMenu && (
-                <ConnectMenu
-                    position={connectMenu.position}
-                    onClose={() => setConnectMenu(null)}
-                    onSelect={(type, shape) => {
-                        if (connectMenu) {
-                            const flowPos = screenToFlowPosition(connectMenu.position);
-                            handleAddAndConnect(type, flowPos, connectMenu.sourceId, connectMenu.sourceHandle, shape as NodeData['shape']);
-                        }
-                    }}
-                />
-            )}
             {
                 contextMenu.isOpen && (
                     <ContextMenu

@@ -6,7 +6,6 @@ import { DEFAULT_EDGE_OPTIONS, NODE_WIDTH, NODE_HEIGHT } from '../constants';
 
 export const useEdgeOperations = (
     recordHistory: () => void,
-    onShowConnectMenu?: (position: { x: number; y: number }, sourceId: string, sourceHandle: string | null) => void
 ) => {
     const { nodes, edges, setNodes, setEdges, setSelectedNodeId, setSelectedEdgeId } = useFlowStore();
     const { screenToFlowPosition } = useReactFlow();
@@ -72,6 +71,43 @@ export const useEdgeOperations = (
         isConnectionValid.current = false;
     }, []);
 
+    const handleAddAndConnect = useCallback((type: string, position: { x: number; y: number }, sourceId: string, sourceHandle: string | null, shape?: NodeData['shape'], autoFocus?: boolean) => {
+        recordHistory();
+        const id = `${Date.now()}`;
+        const newNode = {
+            id,
+            position,
+            data: {
+                label: autoFocus ? '' : (type === 'annotation' ? 'Note' : (shape === 'cylinder' ? 'Database' : shape === 'parallelogram' ? 'Input / Output' : 'New Node')),
+                subLabel: autoFocus ? '' : (type === 'decision' ? 'Branch' : 'Process Step'),
+                icon: type === 'decision' ? 'GitBranch' : (type === 'annotation' ? 'StickyNote' : (shape === 'cylinder' ? 'Database' : 'Settings')),
+                color: type === 'annotation' ? 'yellow' : (type === 'decision' ? 'amber' : (shape === 'cylinder' ? 'emerald' : 'slate')),
+                ...(shape ? { shape } : {}),
+                ...(autoFocus ? { autoFocusLabel: true } : {}),
+            },
+            type,
+        };
+
+        setNodes((nds) => nds.concat(newNode));
+        setEdges((eds) => {
+            // Pick a target handle that's the opposite of the source handle
+            const oppositeHandle: Record<string, string> = {
+                top: 'bottom', bottom: 'top', left: 'right', right: 'left',
+            };
+            const targetHandle = sourceHandle ? (oppositeHandle[sourceHandle] ?? null) : null;
+
+            return eds.concat({
+                id: `e-${sourceId}-${id}`,
+                source: sourceId,
+                sourceHandle,
+                target: id,
+                targetHandle,
+                ...DEFAULT_EDGE_OPTIONS,
+            });
+        });
+        setSelectedNodeId(id);
+    }, [setNodes, setEdges, recordHistory, setSelectedNodeId]);
+
     const onConnectEnd = useCallback(
         (event: any) => {
             if (!connectingNodeId.current) return;
@@ -122,55 +158,15 @@ export const useEdgeOperations = (
                 return;
             }
 
-            // PHASE 2: Context Menu
+            // PHASE 2: Auto-create default process node
             const targetIsPane = event.target.classList.contains('react-flow__pane');
 
-            if (targetIsPane && onShowConnectMenu) {
-                onShowConnectMenu(
-                    { x: clientX, y: clientY },
-                    connectingNodeId.current,
-                    connectingHandleId.current
-                );
+            if (targetIsPane) {
+                handleAddAndConnect('process', position, connectingNodeId.current, connectingHandleId.current, undefined, true);
             }
         },
-        [nodes, edges, screenToFlowPosition, onConnect, onShowConnectMenu]
+        [nodes, edges, screenToFlowPosition, onConnect, handleAddAndConnect]
     );
-
-    const handleAddAndConnect = useCallback((type: string, position: { x: number; y: number }, sourceId: string, sourceHandle: string | null, shape?: NodeData['shape']) => {
-        recordHistory();
-        const id = `${Date.now()}`;
-        const newNode = {
-            id,
-            position,
-            data: {
-                label: type === 'annotation' ? 'Note' : (shape === 'cylinder' ? 'Database' : shape === 'parallelogram' ? 'Input / Output' : 'New Node'),
-                subLabel: type === 'decision' ? 'Branch' : 'Process Step',
-                icon: type === 'decision' ? 'GitBranch' : (type === 'annotation' ? 'StickyNote' : (shape === 'cylinder' ? 'Database' : 'Settings')),
-                color: type === 'annotation' ? 'yellow' : (type === 'decision' ? 'amber' : (shape === 'cylinder' ? 'emerald' : 'slate')),
-                ...(shape ? { shape } : {}),
-            },
-            type,
-        };
-
-        setNodes((nds) => nds.concat(newNode));
-        setEdges((eds) => {
-            // Pick a target handle that's the opposite of the source handle
-            const oppositeHandle: Record<string, string> = {
-                top: 'bottom', bottom: 'top', left: 'right', right: 'left',
-            };
-            const targetHandle = sourceHandle ? (oppositeHandle[sourceHandle] ?? null) : null;
-
-            return eds.concat({
-                id: `e-${sourceId}-${id}`,
-                source: sourceId,
-                sourceHandle,
-                target: id,
-                targetHandle,
-                ...DEFAULT_EDGE_OPTIONS,
-            });
-        });
-        setSelectedNodeId(id);
-    }, [setNodes, setEdges, recordHistory, setSelectedNodeId]);
 
     return {
         updateEdge,

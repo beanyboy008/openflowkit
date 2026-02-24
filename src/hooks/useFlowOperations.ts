@@ -8,13 +8,12 @@ import { useClipboardOperations } from './useClipboardOperations';
 
 export const useFlowOperations = (
   recordHistory: () => void,
-  onShowConnectMenu?: (position: { x: number; y: number }, sourceId: string, sourceHandle: string | null) => void
 ) => {
   const { setNodes, setEdges, setSelectedNodeId, setSelectedEdgeId } = useFlowStore();
 
   // Compose specialized hooks
   const nodeOps = useNodeOperations(recordHistory);
-  const edgeOps = useEdgeOperations(recordHistory, onShowConnectMenu);
+  const edgeOps = useEdgeOperations(recordHistory);
   const layoutOps = useLayoutOperations(recordHistory);
   const clipboardOps = useClipboardOperations(recordHistory);
 
