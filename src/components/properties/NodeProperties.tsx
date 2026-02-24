@@ -467,12 +467,12 @@ export const NodeProperties: React.FC<NodePropertiesProps> = ({
                                         disabled={uploading}
                                         className="text-xs text-slate-400 hover:text-slate-600 cursor-pointer"
                                     >
-                                        {uploading ? 'Uploading...' : 'Attach PDF...'}
+                                        {uploading ? 'Uploading...' : 'Attach file...'}
                                     </button>
                                     <input
                                         ref={fileInputRef}
                                         type="file"
-                                        accept=".pdf,application/pdf"
+                                        accept=".pdf,.md,.txt,.doc,.docx,.rtf,.csv,.json,.xml,.html"
                                         className="hidden"
                                         onChange={async (e) => {
                                             const file = e.target.files?.[0];

@@ -148,8 +148,13 @@ export const FlowCanvas: React.FC<FlowCanvasProps> = ({
                 return;
             }
 
-            // PDF drop → attach to node under cursor, or create new node
-            if (file.type === 'application/pdf' && user) {
+            // Document drop → attach to node under cursor, or create new node
+            const docTypes = ['application/pdf', 'text/plain', 'text/markdown', 'text/csv', 'text/html',
+                'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                'application/rtf', 'application/json', 'application/xml', 'text/xml'];
+            const docExtensions = ['.pdf', '.md', '.txt', '.doc', '.docx', '.rtf', '.csv', '.json', '.xml', '.html'];
+            const isDoc = docTypes.includes(file.type) || docExtensions.some(ext => file.name.toLowerCase().endsWith(ext));
+            if (isDoc && user) {
                 const position = screenToFlowPosition({
                     x: event.clientX,
                     y: event.clientY,
